@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#2b1055">
+    <title>مغامرة التاجر الأمين - البيع في الفقه الإسلامي</title>
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Arial, 'Noto Sans Arabic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background-color: #2b1055; }
+        body {
+            margin: 0;
+            padding: 16px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: #fff;
+            background-color: #2b1055;
+            background-image: -webkit-linear-gradient(315deg, #2b1055 0%, #7597de 100%);
+            background-image: linear-gradient(135deg, #2b1055 0%, #5b3a9e 45%, #1fa2c4 100%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            display: -webkit-box; display: -webkit-flex; display: flex;
+            -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+            -webkit-box-align: start; -webkit-align-items: flex-start; align-items: flex-start;
+            overflow-x: hidden;
+        }
+        .game {
+            width: 100%;
+            max-width: 680px;
+            margin: auto;
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 26px;
+            padding: 22px;
+            text-align: center;
+            -webkit-box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            position: relative;
+        }
+        .header {
+            background: -webkit-linear-gradient(left, #ff9a3c, #ff4e8a);
+            background: linear-gradient(90deg, #ff9a3c, #ff4e8a);
+            border-radius: 18px;
+            padding: 14px 12px;
+            margin-bottom: 16px;
+            -webkit-box-shadow: 0 8px 20px rgba(255,78,138,0.35);
+            box-shadow: 0 8px 20px rgba(255,78,138,0.35);
+        }
+        h1 { margin: 0 0 4px 0; font-size: 26px; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+        .teacher { font-weight: bold; font-size: 15px; margin: 4px 0 0 0; }
+        .school { font-size: 13px; font-weight: 600; margin: 2px 0 0 0; opacity: 0.95; }
+        .sub { font-size: 14px; margin: 6px 0 0 0; opacity: 0.95; }
+
+        .hud {
+            display: -webkit-box; display: -webkit-flex; display: flex;
+            -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .chip {
+            background: rgba(0,0,0,0.28);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .chip.coin { color: #ffd54a; }
+
+        .map {
+            position: relative;
+            display: -webkit-box; display: -webkit-flex; display: flex;
+            -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+            -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+            margin: 14px 4px 16px;
+        }
+        .map:before {
+            content: "";
+            position: absolute;
+            top: 50%; left: 14px; right: 14px;
+            height: 5px; margin-top: -2px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+        }
+        .node {
+            position: relative; z-index: 1;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: #4a3a7a;
+            border: 3px solid rgba(255,255,255,0.35);
+            font-size: 14px; font-weight: bold;
+            line-height: 26px;
+            text-align: center;
+        }
+        .node.done { background: #2ecc71; border-color: #b9f6ca; }
+        .node.now {
+            background: #ff9a3c; border-color: #fff;
+            -webkit-animation: pulse 1.2s infinite; animation: pulse 1.2s infinite;
+        }
+        @-webkit-keyframes pulse { 0% { -webkit-transform: scale(1); } 50% { -webkit-transform: scale(1.25); } 100% { -webkit-transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+        .story {
+            background: rgba(255,255,255,0.14);
+            border-right: 6px solid #ffd54a;
+            border-radius: 14px;
+            padding: 12px 14px;
+            text-align: right;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .story .big { font-size: 30px; vertical-align: middle; margin-left: 8px; }
+        .qbox {
+            background: #fff;
+            color: #2b1055;
+            border-radius: 18px;
+            padding: 18px 16px;
+            margin: 14px 0;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.6;
+            -webkit-box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+        }
+        .btn-opt {
+            -webkit-appearance: none; appearance: none;
+            display: -webkit-box; display: -webkit-flex; display: flex;
+            -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+            -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+            width: 100%;
+            margin: 0 0 11px 0;
+            padding: 15px 16px;
+            border: 3px solid rgba(255,255,255,0.55);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 17px;
+            font-weight: bold;
+            text-align: right;
+            line-height: 1.5;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-transition: -webkit-transform 0.15s;
+            transition: transform 0.15s;
+        }
+        .btn-opt span { pointer-events: none; }
+        .c0 { background: #7b4ae2; }
+        .c1 { background: #00a6a6; }
+        .c2 { background: #f08a24; }
+        .c3 { background: #e0457b; }
+        @media (hover: hover) { .btn-opt:hover { -webkit-transform: translateY(-2px) scale(1.01); transform: translateY(-2px) scale(1.01); } }
+        .btn-opt:active { -webkit-transform: scale(0.98); transform: scale(0.98); }
+        .btn-opt.locked { opacity: 0.55; cursor: default; }
+        .btn-opt.right { background: #1faa59 !important; border-color: #b9f6ca !important; opacity: 1 !important; }
+        .btn-opt.bad { background: #d63a3a !important; border-color: #ffb3b3 !important; opacity: 1 !important; }
+
+        .fb {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            line-height: 1.7;
+            text-align: right;
+        }
+        .fb.ok { display: block; background: #d9f8e5; color: #0d5c2f; }
+        .fb.no { display: block; background: #ffe0e0; color: #8a1d1d; }
+
+        .btn-main {
+            -webkit-appearance: none; appearance: none;
+            display: block; width: 100%;
+            margin-top: 16px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 16px;
+            font-size: 19px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #ff4e8a;
+            background-image: -webkit-linear-gradient(left, #ff9a3c, #ff4e8a);
+            background-image: linear-gradient(90deg, #ff9a3c, #ff4e8a);
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-box-shadow: 0 8px 18px rgba(255,78,138,0.4);
+            box-shadow: 0 8px 18px rgba(255,78,138,0.4);
+        }
+        .btn-main:active { opacity: 0.88; }
+        .btn-main.alt { background-image: none; background-color: #1fa2c4; -webkit-box-shadow: none; box-shadow: none; }
+        #next-btn { display: none; }
+
+        .start input {
+            -webkit-appearance: none; appearance: none;
+            width: 100%;
+            margin: 14px 0 8px;
+            padding: 16px;
+            font-size: 20px;
+            text-align: center;
+            border: 3px solid #ffd54a;
+            border-radius: 16px;
+            outline: none;
+            background: #fff;
+            color: #2b1055;
+        }
+        .err { color: #ffd0d0; font-weight: bold; min-height: 24px; }
+        .hero { font-size: 64px; margin: 6px 0; }
+        .lead { font-size: 18px; font-weight: bold; margin: 8px 0; line-height: 1.7; }
+
+        .score-big { font-size: 54px; font-weight: bold; color: #ffd54a; margin: 8px 0; text-shadow: 0 3px 8px rgba(0,0,0,0.3); }
+        .stars { font-size: 40px; margin: 6px 0; }
+        .rank { display: inline-block; background: #ffd54a; color: #2b1055; font-weight: bold; font-size: 18px; border-radius: 20px; padding: 8px 18px; margin: 6px 0 12px; }
+        .save { font-size: 15px; font-weight: bold; min-height: 22px; margin: 10px 0 0; }
+        .save.ok { color: #9dffbf; }
+        .save.err2 { color: #ffb3b3; }
+        .save.wait { color: #e0d8ff; }
+        #retry-btn { display: none; }
+        #quiz, #result { display: none; }
+
+        .confetti {
+            position: fixed; top: -20px; width: 10px; height: 16px;
+            z-index: 50; pointer-events: none;
+            -webkit-animation: fall 3.2s linear forwards; animation: fall 3.2s linear forwards;
+        }
+        @-webkit-keyframes fall { to { -webkit-transform: translateY(110vh) rotate(720deg); opacity: 0.9; } }
+        @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0.9; } }
+
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            .game { padding: 14px; border-radius: 20px; }
+            h1 { font-size: 22px; }
+            .qbox { font-size: 18px; }
+            .btn-opt { font-size: 16px; padding: 13px 14px; }
+            .node { width: 22px; height: 22px; line-height: 16px; font-size: 11px; border-width: 2px; }
+            .score-big { font-size: 44px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game">
+
+    <!-- شاشة البداية -->
+    <div id="start" class="start">
+        <div class="header">
+            <h1>🏪 مغامرة التاجر الأمين</h1>
+            <div class="teacher">إعداد المعلم: عادل خضر</div>
+            <div class="school">مدرسة المشيدة الأساسية الأولى للبنين</div>
+            <div class="sub">درس: البيع في الفقه الإسلامي - الصف العاشر</div>
+        </div>
+        <div class="hero">🗺️💰</div>
+        <p class="lead">مرحباً أيها التاجر! أمامك 10 محطات في سوق الأمانة.<br>أجب بدقة، اجمع الدنانير الذهبية، وكن تاجراً أميناً! 🪙</p>
+        <input type="text" id="student-name" placeholder="اكتب اسمك الثلاثي: مثال أحمد محمد علي" maxlength="60" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="err" id="name-error"></div>
+        <button type="button" class="btn-main" onclick="startGame()">انطلق في المغامرة 🚀</button>
+    </div>
+
+    <!-- شاشة الأسئلة -->
+    <div id="quiz">
+        <div class="header">
+            <h1>🏪 مغامرة التاجر الأمين</h1>
+            <div class="teacher">إعداد المعلم: عادل خضر</div>
+            <div class="school">مدرسة المشيدة الأساسية الأولى للبنين</div>
+        </div>
+        <div class="hud">
+            <span class="chip" id="stage-chip">المحطة 1 من 8</span>
+            <span class="chip coin" id="coin-chip">🪙 0</span>
+        </div>
+        <div class="map" id="map"></div>
+        <div class="story" id="story"></div>
+        <div class="qbox" id="qtext"></div>
+        <div id="opts"></div>
+        <div class="fb" id="fb"></div>
+        <button type="button" class="btn-main" id="next-btn" onclick="nextQ()">المحطة التالية ⬅️</button>
+    </div>
+
+    <!-- شاشة النتيجة -->
+    <div id="result">
+        <div class="header">
+            <h1>🏆 انتهت المغامرة!</h1>
+            <div class="teacher">إعداد المعلم: عادل خضر</div>
+            <div class="school">مدرسة المشيدة الأساسية الأولى للبنين</div>
+        </div>
+        <div class="stars" id="stars"></div>
+        <div class="score-big" id="final"></div>
+        <div class="rank" id="rank"></div>
+        <p class="lead" id="msg"></p>
+        <p class="save wait" id="save"></p>
+        <button type="button" class="btn-main alt" id="retry-btn" onclick="saveScore()">🔁 إعادة محاولة حفظ العلامة</button>
+        <button type="button" class="btn-main" onclick="restartGame()">أعد المغامرة 🔄</button>
+    </div>
+</div>
+
+<script>
+    /* الإجابة الصحيحة دائماً أول خيار في القائمة، ويتم خلط الخيارات تلقائياً عند العرض */
+    var Q = [
+        {
+            icon: "🚪",
+            story: "تقف عند بوابة سوق الأمانة، والحارس يسألك عن معنى البيع قبل أن يسمح لك بالدخول!",
+            q: "البيع في الفقه الإسلامي هو: نقل ملكية سلعة إلى الغير مقابل:",
+            o: ["مال", "هبة", "إعارة", "وصية"],
+            e: "البيع نقل ملكية سلعة إلى الغير مقابل مال، والمال هو كل ما له قيمة مادية وأباح الشارع الانتفاع به."
+        },
+        {
+            icon: "🚗",
+            story: "في ساحة التبادل، تاجر يعرض سيارته ويريد أن يأخذ مقابلها قطعة أرض!",
+            q: "نوع البيع الذي تشير إليه عبارة: (بيع سيارة بقطعة أرض) هو:",
+            o: ["المقايضة", "البيع المطلق", "الصرف", "المرابحة"],
+            e: "المقايضة هي مبادلة سلعة بسلعة، مثل بيع سيارة بقطعة أرض."
+        },
+        {
+            icon: "💱",
+            story: "عند محل الصرّاف، تحتاج أن تبدّل عشرة دولارات بدنانير أردنية.",
+            q: "بيع عشرة دولارات بسبعة دنانير يُسمى:",
+            o: ["الصرف", "المقايضة", "البيع المطلق", "الإجارة"],
+            e: "الصرف هو مبادلة نقد بنقد، مثل بيع الدولارات بالدنانير."
+        },
+        {
+            icon: "📜",
+            story: "شيخ السوق الحكيم يسألك عن حكم البيع استناداً إلى الدليلين: الآية الكريمة والحديث الشريف.",
+            q: "يُستنتج من قوله تعالى: «وأحل الله البيع وحرم الربا» وحديث: «وكل بيع مبرور» أن حكم البيع:",
+            o: ["مباح", "حرام", "مندوب", "واجب"],
+            e: "الأصل في العقود والمعاملات الإباحة، فحكم البيع مباح إلا ما حرّمه الشرع."
+        },
+        {
+            icon: "🏛️",
+            story: "تدخل قاعة العقود الكبرى، حيث لا يصح أي عقد إلا إذا اكتملت أركانه.",
+            q: "أيٌّ مما يلي ليس من أركان عقد البيع؟",
+            o: ["الشهود", "الصيغة (الإيجاب والقبول)", "العاقدان (البائع والمشتري)", "محل العقد (المبيع والثمن)"],
+            e: "أركان عقد البيع ثلاثة: العاقدان، والصيغة، ومحل العقد (المبيع والثمن)."
+        },
+        {
+            icon: "🤝",
+            story: "رجل يقول لامرأة: «بعتك هذه السيارة بعشرين ألف دينار»، فتقول: «قبلت». عليك تحليل الصفقة!",
+            q: "قول البائع: (بعتك) وقول المشتري: (قبلت) يمثل ركن:",
+            o: ["الصيغة", "العاقدين", "محل العقد", "الثمن"],
+            e: "الصيغة هي إعلان طرفي العقد عن موافقتهما على إجراء البيع، وتسمى الإيجاب والقبول."
+        },
+        {
+            icon: "🕵️",
+            story: "مفتش السوق وجد طفلاً صغيراً مميزاً يبيع جهاز والده الإلكتروني دون علم أحد!",
+            q: "ما الخلل في عقد بيع طفل صغير مميز جهاز والده دون إذن والده؟",
+            o: ["العاقد ليس أهلاً لإجراء العقد دون إذن وليه", "المبيع محرم شرعاً", "المبيع مجهول", "البائع مكره على البيع"],
+            e: "يشترط أن يكون العاقد بالغاً عاقلاً، ويجوز بيع الصغير المميز إن أجاز له وليه، وهنا باع دون إذن."
+        },
+        {
+            icon: "🚫",
+            story: "في مخزن السوق، يعرض أحدهم بضاعة ممنوعة، والمفتش يطلب منك أن تحدد لماذا لا يجوز بيعها!",
+            q: "لا يجوز بيع الخمر والمخدرات وسائر المحرمات لأنه يشترط في المبيع أن يكون:",
+            o: ["مشروعاً (مما يجوز التعامل به)", "معلوماً", "جديداً", "نقدياً"],
+            e: "من شروط المبيع أن يكون مشروعاً، أي مما يجوز التعامل به، فلا يجوز بيع الخمر والمخدرات وسائر المحرمات."
+        },
+        {
+            icon: "✅",
+            story: "أُبرمت صفقة صحيحة مكتملة الأركان والشروط، وينتظر الجميع معرفة ما يترتب عليها!",
+            q: "من آثار عقد البيع الصحيح:",
+            o: ["انتقال ملكية السلعة للمشتري وملكية الثمن للبائع", "بقاء ملكية السلعة للبائع", "انتقال ملكية السلعة والثمن كليهما للمشتري", "بقاء الثمن ملكاً للمشتري"],
+            e: "إذا توافرت شروط عقد البيع انعقد صحيحاً، وترتب عليه انتقال ملكية الثمن للبائع وملكية السلعة للمشتري."
+        },
+        {
+            icon: "👑",
+            story: "المحطة الأخيرة! ساحة الأخلاق وآداب التجارة، والنجاح فيها يجعلك تاجراً أميناً حقاً.",
+            q: "أدب البيع الذي يدل عليه قول رسول الله ﷺ: «لا يحتكر إلا خاطئ» هو:",
+            o: ["عدم استغلال حاجة الناس", "الصدق في التعامل", "تجنب الحلف", "التفقه في أحكام البيع"],
+            e: "الاحتكار هو حبس السلعة التي تشتد حاجة الناس إليها ليغلو سعرها، وهو استغلال لحاجة الناس."
+        }
+    ];
+
+    var cur = 0, score = 0, streak = 0, answered = false, studentName = "", curOpts = [];
+
+    /* ===== الصوت (يُفعَّل بلمسة المستخدم لأجل الآيفون) ===== */
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var actx = null;
+    function unlockAudio() {
+        try {
+            if (!AC) return;
+            if (!actx) actx = new AC();
+            if (actx.state === "suspended" && actx.resume) actx.resume();
+        } catch (e) {}
+    }
+    function tone(freqs, type, dur) {
+        try {
+            if (!actx) return;
+            if (actx.state === "suspended" && actx.resume) actx.resume();
+            var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime, i;
+            o.type = type;
+            o.connect(g); g.connect(actx.destination);
+            for (i = 0; i < freqs.length; i++) o.frequency.setValueAtTime(freqs[i], t + i * 0.1);
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + dur);
+            o.start(t); o.stop(t + dur);
+        } catch (e) {}
+    }
+    function soundOk() { tone([523.25, 659.25, 783.99], "sine", 0.4); }
+    function soundNo() { tone([200, 150], "sawtooth", 0.3); }
+
+    /* ===== أدوات ===== */
+    function shuffle(a) {
+        var i, j, t;
+        for (i = a.length - 1; i > 0; i--) {
+            j = Math.floor(Math.random() * (i + 1));
+            t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+    }
+    function $(id) { return document.getElementById(id); }
+
+    function drawMap() {
+        var m = $("map"), i, d;
+        m.innerHTML = "";
+        for (i = 0; i < Q.length; i++) {
+            d = document.createElement("div");
+            d.className = "node" + (i < cur ? " done" : (i === cur ? " now" : ""));
+            d.textContent = i < cur ? "✓" : (i + 1);
+            m.appendChild(d);
+        }
+    }
+
+    function confetti() {
+        var colors = ["#ff4e8a", "#ffd54a", "#2ecc71", "#1fa2c4", "#ff9a3c", "#7b4ae2"], i, c;
+        for (i = 0; i < 45; i++) {
+            c = document.createElement("div");
+            c.className = "confetti";
+            c.style.left = Math.floor(Math.random() * 100) + "%";
+            c.style.background = colors[i % colors.length];
+            c.style.webkitAnimationDelay = (Math.random() * 1.2) + "s";
+            c.style.animationDelay = (Math.random() * 1.2) + "s";
+            document.body.appendChild(c);
+            (function (el) { setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 5000); })(c);
+        }
+    }
+
+    /* ===== سير اللعبة ===== */
+    function loadQ() {
+        answered = false;
+        var q = Q[cur], box = $("opts"), i, b, lab, ic;
+
+        $("stage-chip").textContent = "المحطة " + (cur + 1) + " من " + Q.length;
+        $("coin-chip").textContent = "🪙 " + score;
+        $("story").innerHTML = '<span class="big">' + q.icon + '</span>' + q.story;
+        $("qtext").textContent = q.q;
+        drawMap();
+
+        curOpts = [];
+        for (i = 0; i < q.o.length; i++) curOpts.push({ t: q.o[i], ok: i === 0 });
+        shuffle(curOpts);
+
+        box.innerHTML = "";
+        for (i = 0; i < curOpts.length; i++) {
+            b = document.createElement("button");
+            b.type = "button";
+            b.className = "btn-opt c" + (i % 4);
+            lab = document.createElement("span");
+            lab.textContent = curOpts[i].t;
+            ic = document.createElement("span");
+            ic.className = "ic";
+            ic.textContent = "⚪";
+            b.appendChild(lab);
+            b.appendChild(ic);
+            (function (idx, btn) { btn.onclick = function () { pick(idx, btn); }; })(i, b);
+            box.appendChild(b);
+        }
+        $("fb").className = "fb";
+        $("fb").innerHTML = "";
+        $("next-btn").style.display = "none";
+        $("next-btn").textContent = (cur === Q.length - 1) ? "اعرض النتيجة 🏆" : "المحطة التالية ⬅️";
+    }
+
+    function pick(idx, btn) {
+        if (answered) return;
+        answered = true;
+        var all = document.querySelectorAll(".btn-opt"), i, fb = $("fb"), extra = "";
+
+        for (i = 0; i < all.length; i++) {
+            if (all[i] !== btn) all[i].className += " locked";
+        }
+        if (curOpts[idx].ok) {
+            score++; streak++;
+            btn.className += " right";
+            btn.querySelector(".ic").textContent = "✅";
+            soundOk();
+            if (streak >= 3) extra = "<br>🔥 " + streak + " إجابات صحيحة متتالية، أنت نار!";
+            fb.className = "fb ok";
+            fb.innerHTML = "✨ إجابة صحيحة! +1 🪙<br>" + Q[cur].e + extra;
+        } else {
+            streak = 0;
+            btn.className += " bad";
+            btn.querySelector(".ic").textContent = "❌";
+            for (i = 0; i < curOpts.length; i++) {
+                if (curOpts[i].ok) {
+                    all[i].className = all[i].className.replace(" locked", "") + " right";
+                    all[i].querySelector(".ic").textContent = "✅";
+                }
+            }
+            soundNo();
+            fb.className = "fb no";
+            fb.innerHTML = "💡 الإجابة الصحيحة هي المحددة بالأخضر.<br>" + Q[cur].e;
+        }
+        $("coin-chip").textContent = "🪙 " + score;
+        $("next-btn").style.display = "block";
+    }
+
+    function nextQ() {
+        cur++;
+        if (cur < Q.length) { loadQ(); window.scrollTo(0, 0); } else { showResult(); }
+    }
+
+    function startGame() {
+        unlockAudio();
+        var n = $("student-name").value.replace(/^\s+|\s+$/g, "");
+        if (n.length < 3) { $("name-error").textContent = "الرجاء كتابة اسمك كاملاً"; return; }
+        studentName = n;
+        $("start").style.display = "none";
+        $("quiz").style.display = "block";
+        loadQ();
+    }
+
+    function withTimeout(p, ms) {
+        return new Promise(function (res, rej) {
+            var t = setTimeout(function () { rej({ code: "timeout" }); }, ms);
+            p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+        });
+    }
+
+    function saveScore() {
+        var st = $("save"), rb = $("retry-btn"), attempt;
+        rb.style.display = "none";
+        st.className = "save wait";
+        st.textContent = "جاري حفظ علامتك... ⏳";
+        try {
+            if (typeof window.saveScoreToFirebase !== "function") {
+                attempt = Promise.reject({ code: "firebase-not-loaded" });
+            } else {
+                attempt = Promise.resolve(window.saveScoreToFirebase(studentName, score, Q.length));
+            }
+        } catch (e) { attempt = Promise.reject(e); }
+
+        withTimeout(attempt, 15000).then(function () {
+            st.className = "save ok";
+            st.textContent = "✅ تم حفظ علامتك وإرسالها للمعلم";
+        }, function (e) {
+            if (window.console) console.error(e);
+            st.className = "save err2";
+            st.textContent = "⚠️ لم يتم حفظ العلامة، تأكد من اتصال الإنترنت. رمز الخطأ: " + ((e && (e.code || e.message)) || "unknown");
+            rb.style.display = "block";
+        });
+    }
+
+    function showResult() {
+        $("quiz").style.display = "none";
+        $("result").style.display = "block";
+        $("final").textContent = score + " / " + Q.length;
+
+        var stars = "⭐", rank = "تاجر مبتدئ 🌱", msg = "محاولة جيدة! راجع الدرس وأعد المغامرة لتصبح تاجراً أميناً.";
+        if (score === Q.length) {
+            stars = "⭐⭐⭐"; rank = "تاجر أمين - ذهبي 👑";
+            msg = "ما شاء الله! علامة كاملة! أنت خبير في أحكام البيع! 🏆";
+        } else if (score >= 8) {
+            stars = "⭐⭐⭐"; rank = "تاجر ماهر 🥈";
+            msg = "أحسنت! نتيجة رائعة، اقتربت من العلامة الكاملة! 👏";
+        } else if (score >= 5) {
+            stars = "⭐⭐"; rank = "تاجر صاعد 🥉";
+            msg = "جيد! راجع المحطات التي أخطأت فيها وأعد المحاولة. 💪";
+        }
+        $("stars").textContent = stars;
+        $("rank").textContent = rank;
+        $("msg").textContent = msg;
+        if (score >= 8) confetti();
+        saveScore();
+        window.scrollTo(0, 0);
+    }
+
+    function restartGame() {
+        unlockAudio();
+        cur = 0; score = 0; streak = 0;
+        $("retry-btn").style.display = "none";
+        $("result").style.display = "none";
+        $("quiz").style.display = "block";
+        loadQ();
+        window.scrollTo(0, 0);
+    }
+
+    $("student-name").addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.keyCode === 13) { e.preventDefault(); startGame(); }
+    });
+</script>
+
+<script nomodule>
+    window.saveScoreToFirebase = function () { return Promise.reject({ code: "browser-too-old" }); };
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { initializeFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJvnXeD_ksqWYSCI1pK7R-Lin2urrMDjA",
+        authDomain: "examschool110670.firebaseapp.com",
+        projectId: "examschool110670",
+        storageBucket: "examschool110670.firebasestorage.app",
+        messagingSenderId: "682365042133",
+        appId: "1:682365042133:web:035f26588f979a84ebd15c",
+        measurementId: "G-GVQH5E8SH4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+    window.saveScoreToFirebase = async (name, score, total) => {
+        await addDoc(collection(db, "results"), {
+            name: name,
+            score: score,
+            total: total,
+            game: "fiqh-bay-grade10",
+            createdAt: serverTimestamp()
+        });
+    };
+</script>
+</body>
+</html>
