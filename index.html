@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#1e3c72">
+    <title>لعبة سفينة النجاة - قصة سيدنا نوح عليه السلام</title>
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Arial, 'Noto Sans Arabic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+            background-color: #2a5298;
+        }
+        body {
+            background-color: #2a5298;
+            background-image: -webkit-linear-gradient(315deg, #1e3c72 0%, #2a5298 50%, #6dd5ed 100%);
+            background-image: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #6dd5ed 100%);
+            background-repeat: no-repeat;
+            background-size: cover;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-pack: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            -webkit-box-align: start;
+            -webkit-align-items: flex-start;
+            align-items: flex-start;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .game-container {
+            background: #ffffff;
+            border-radius: 24px;
+            -webkit-box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin: auto;
+        }
+        .header {
+            background: #eef5ff;
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 2px solid #b2d5ff;
+        }
+        h1 {
+            color: #1e3c72;
+            margin: 0 0 5px 0;
+            font-size: 26px;
+        }
+        .teacher-info {
+            color: #1e3c72;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 5px 0 2px 0;
+        }
+        .school-info {
+            color: #555;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+        .progress-bar {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress {
+            height: 100%;
+            background: -webkit-linear-gradient(left, #ff9900, #ff5500);
+            background: linear-gradient(90deg, #ff9900, #ff5500);
+            width: 0%;
+            -webkit-transition: width 0.4s ease;
+            transition: width 0.4s ease;
+        }
+        .stats {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-pack: justify;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            font-weight: bold;
+            color: #555;
+            margin-top: 8px;
+            font-size: 15px;
+        }
+        .question-card {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 25px 0;
+            line-height: 1.5;
+        }
+        .options-grid {
+            display: block;
+        }
+        .btn-option {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 14px;
+            padding: 16px;
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            -webkit-transition: all 0.2s ease;
+            transition: all 0.2s ease;
+            text-align: right;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-box-pack: justify;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            touch-action: manipulation;
+        }
+        .btn-option:last-child { margin-bottom: 0; }
+        .btn-option span { pointer-events: none; }
+        @media (hover: hover) {
+            .btn-option:hover {
+                background: #eef2ff;
+                border-color: #4361ee;
+                -webkit-transform: translateY(-2px);
+                transform: translateY(-2px);
+            }
+        }
+        .btn-option.correct {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724 !important;
+        }
+        .btn-option.wrong {
+            background: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24 !important;
+        }
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.6;
+            display: none;
+        }
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .feedback.wrong {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .btn-next {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #2a5298;
+            background-image: -webkit-linear-gradient(left, #1e3c72, #2a5298);
+            background-image: linear-gradient(90deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+            width: 100%;
+            touch-action: manipulation;
+        }
+        .btn-next:active { opacity: 0.85; }
+        .btn-retry {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ff9900;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 0 0 15px 0;
+            display: none;
+            width: 100%;
+            touch-action: manipulation;
+        }
+        .result-card {
+            display: none;
+        }
+        .score-badge {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff9900;
+            margin: 20px 0;
+        }
+        .stars {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        .start-screen input {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            padding: 16px;
+            font-size: 20px;
+            border: 2px solid #b2d5ff;
+            border-radius: 14px;
+            text-align: center;
+            margin: 20px 0 10px 0;
+            outline: none;
+            background: #fff;
+            color: #333;
+        }
+        .start-screen input:focus { border-color: #4361ee; }
+        .name-error { color: #dc3545; font-weight: bold; min-height: 24px; margin-bottom: 10px; }
+        .save-status { font-size: 16px; font-weight: bold; margin: 0 0 20px 0; min-height: 22px; }
+        .save-status.ok { color: #28a745; }
+        .save-status.err { color: #dc3545; }
+        .save-status.wait { color: #888; }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .game-container { padding: 18px; border-radius: 18px; }
+            h1 { font-size: 22px; }
+            .question-card { font-size: 18px; }
+            .btn-option { font-size: 16px; padding: 14px; }
+            .score-badge { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="start-screen" class="start-screen">
+        <div class="header">
+            <h1>🚢 لعبة سفينة النجاة</h1>
+            <div class="teacher-info">إعداد المعلم: عادل خضر</div>
+            <div class="school-info">مدرسة المشيدة الأساسية الأولى للبنين</div>
+            <p style="margin:0; color:#666; font-size:14px;">رحلة تفاعلية في قصة سيدنا نوح عليه السلام</p>
+        </div>
+        <p style="font-size:20px; font-weight:bold; color:#1e3c72;">اكتب اسمك الثلاثي لتبدأ الرحلة 👇</p>
+        <input type="text" id="student-name" placeholder="مثال: أحمد محمد علي" maxlength="60" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="name-error" id="name-error"></div>
+        <button type="button" class="btn-next" style="display:block;" onclick="startGame()">ابدأ اللعبة 🚀</button>
+    </div>
+
+    <div id="quiz-screen" style="display:none;">
+        <div class="header">
+            <h1>🚢 لعبة سفينة النجاة</h1>
+            <div class="teacher-info">إعداد المعلم: عادل خضر</div>
+            <div class="school-info">مدرسة المشيدة الأساسية الأولى للبنين</div>
+            <p style="margin:0; color:#666; font-size:14px;">رحلة تفاعلية في قصة سيدنا نوح عليه السلام</p>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="stats">
+                <span id="question-count">السؤال 1 من 6</span>
+                <span id="score-display">النقاط: 0</span>
+            </div>
+        </div>
+
+        <div class="question-card" id="question-text">
+            جاري تحميل السؤال...
+        </div>
+
+        <div class="options-grid" id="options-container"></div>
+
+        <div class="feedback" id="feedback-box"></div>
+
+        <button type="button" class="btn-next" id="next-btn" onclick="nextQuestion()">السؤال التالي ⬅️</button>
+    </div>
+
+    <div class="result-card" id="result-screen">
+        <h1>🎉 اكتملت الرحلة بنجاح!</h1>
+        <div class="stars" id="stars-display">⭐⭐⭐</div>
+        <p style="font-size: 20px; color: #555;">نتيجة اختبار قصة سيدنا نوح عليه السلام</p>
+        <div class="score-badge" id="final-score">0 / 6</div>
+        <p id="result-message" style="font-size: 18px; font-weight: bold; color: #1e3c72; margin-bottom: 25px;"></p>
+        <p class="save-status wait" id="save-status"></p>
+        <button type="button" class="btn-retry" id="retry-btn" onclick="saveScore()">🔁 إعادة محاولة حفظ العلامة</button>
+        <button type="button" class="btn-next" style="display:block;" onclick="restartGame()">إعادة اللعبة 🔄</button>
+    </div>
+</div>
+
+<script>
+    var questions = [
+        {
+            question: "كم سنة استمر سيدنا نوح عليه السلام يدعو قومه إلى عبادة الله تعالى بصبْرٍ دون يأس؟",
+            options: ["500 سنة", "950 سنة", "100 سنة"],
+            answer: 1,
+            explanation: "أحسنت! دعا سيدنا نوح عليه السلام قومه تسعمئة وخمسين سنة (950 سنة) بأساليب متعددة."
+        },
+        {
+            question: "ماذا أمره الله تعالى أن يبني بعدما استهزأ به قومه ورفضوا الإيمان؟",
+            options: ["حصناً كبيراً", "سفينة ضخمة", "بيتاً فوق الجبل"],
+            answer: 1,
+            explanation: "ممتاز! أمره الله تعالى ببناء سفينة ضخمة لتكون سبباً لنجاة المؤمنين."
+        },
+        {
+            question: "ماذا حمل سيدنا نوح عليه السلام معه في السفينة لحفظ الكائنات؟",
+            options: ["من كل نوع زوجين اثنين (ذكراً وأنثى)", "الطيور فقط", "الحيوانات الأليفة فقط"],
+            answer: 0,
+            explanation: "إجابة صحيحة! أمره الله أن يحمل من كل جنس زوجين اثنين لحفظ الكائنات."
+        },
+        {
+            question: "ما اسم الماء الكثيف الذي أرسله الله تعالى ليفضل بين المؤمنين والكافرين؟",
+            options: ["السيل", "الطوفان", "الإعصار"],
+            answer: 1,
+            explanation: "صحيح! الطوفان هو ماء كثير يغمر اليابسة فيغرق كل ما عليها."
+        },
+        {
+            question: "من الشخص من أسرته الذي رفض ركوب السفينة وقال: سآوي إلى جبل يعصمني من الماء؟",
+            options: ["أخوه", "ابنه", "عمه"],
+            answer: 1,
+            explanation: "إجابة دقيقة! أصرّ ابنه على كفره ورفض دعوة أبيه فكان من المغرقين."
+        },
+        {
+            question: "يُعد سيدنا نوح عليه السلام من (أولي العزم من الرسل) لأنهم:",
+            options: ["تحملوا المشاق وصبروا على أذى أقوامهم", "كانوا يبنون السفن فقط", "عاشوا في الجبال"],
+            answer: 0,
+            explanation: "بطل! أولو العزم من الرسل هم الذين تحملوا المشاق العظيمة وصبروا صبراً جميلاً."
+        }
+    ];
+
+    var currentQuestion = 0;
+    var score = 0;
+    var answered = false;
+    var studentName = "";
+
+    /* ====== الصوت: سياق واحد يُفعَّل بلمسة المستخدم (مطلوب في الآيفون) ====== */
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    var audioCtx = null;
+
+    function unlockAudio() {
+        try {
+            if (!AudioCtx) return;
+            if (!audioCtx) audioCtx = new AudioCtx();
+            if (audioCtx.state === "suspended" && audioCtx.resume) audioCtx.resume();
+        } catch (e) {}
+    }
+
+    function playSound(type) {
+        try {
+            if (!audioCtx) return;
+            if (audioCtx.state === "suspended" && audioCtx.resume) audioCtx.resume();
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            var t = audioCtx.currentTime;
+
+            if (type === "correct") {
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(523.25, t);
+                osc.frequency.setValueAtTime(659.25, t + 0.1);
+            } else {
+                osc.type = "sawtooth";
+                osc.frequency.setValueAtTime(200, t);
+                osc.frequency.setValueAtTime(150, t + 0.1);
+            }
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+            osc.start(t);
+            osc.stop(t + 0.3);
+        } catch (e) {}
+    }
+
+    /* ====== الأسئلة ====== */
+    function loadQuestion() {
+        answered = false;
+        var q = questions[currentQuestion];
+        document.getElementById("question-text").textContent = q.question;
+        document.getElementById("question-count").textContent = "السؤال " + (currentQuestion + 1) + " من " + questions.length;
+        document.getElementById("score-display").textContent = "النقاط: " + score;
+
+        var progressPercent = (currentQuestion / questions.length) * 100;
+        document.getElementById("progress").style.width = progressPercent + "%";
+
+        var optionsContainer = document.getElementById("options-container");
+        optionsContainer.innerHTML = "";
+
+        q.options.forEach(function (opt, idx) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn-option";
+            var label = document.createElement("span");
+            label.textContent = opt;
+            var icon = document.createElement("span");
+            icon.className = "icon";
+            icon.textContent = "⚪";
+            btn.appendChild(label);
+            btn.appendChild(icon);
+            btn.onclick = function () { checkAnswer(idx, btn); };
+            optionsContainer.appendChild(btn);
+        });
+
+        document.getElementById("feedback-box").style.display = "none";
+        document.getElementById("next-btn").style.display = "none";
+    }
+
+    function checkAnswer(selectedIndex, selectedBtn) {
+        if (answered) return;
+        answered = true;
+
+        var q = questions[currentQuestion];
+        var allButtons = document.querySelectorAll(".btn-option");
+
+        if (selectedIndex === q.answer) {
+            selectedBtn.classList.add("correct");
+            selectedBtn.querySelector(".icon").textContent = "✅";
+            score++;
+            playSound("correct");
+            showFeedback(true, q.explanation);
+        } else {
+            selectedBtn.classList.add("wrong");
+            selectedBtn.querySelector(".icon").textContent = "❌";
+            allButtons[q.answer].classList.add("correct");
+            allButtons[q.answer].querySelector(".icon").textContent = "✅";
+            playSound("wrong");
+            showFeedback(false, q.explanation);
+        }
+
+        document.getElementById("score-display").textContent = "النقاط: " + score;
+        document.getElementById("next-btn").style.display = "block";
+    }
+
+    function showFeedback(isCorrect, text) {
+        var fb = document.getElementById("feedback-box");
+        fb.className = "feedback " + (isCorrect ? "correct" : "wrong");
+        fb.innerHTML = (isCorrect ? "✨ إجابة صحيحة! " : "💡 الإجابة الصحيحة هي المعلمة بالأخضر. ") + "<br>" + text;
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function startGame() {
+        unlockAudio();
+        var name = document.getElementById("student-name").value.trim();
+        if (name.length < 3) {
+            document.getElementById("name-error").textContent = "الرجاء كتابة اسمك كاملاً";
+            return;
+        }
+        studentName = name;
+        document.getElementById("start-screen").style.display = "none";
+        document.getElementById("quiz-screen").style.display = "block";
+        loadQuestion();
+    }
+
+    /* ====== حفظ العلامة مع مهلة زمنية وزر إعادة المحاولة ====== */
+    function withTimeout(promise, ms) {
+        return new Promise(function (resolve, reject) {
+            var timer = setTimeout(function () { reject({ code: "timeout" }); }, ms);
+            promise.then(function (v) { clearTimeout(timer); resolve(v); },
+                         function (e) { clearTimeout(timer); reject(e); });
+        });
+    }
+
+    function saveScore() {
+        var st = document.getElementById("save-status");
+        var retry = document.getElementById("retry-btn");
+        retry.style.display = "none";
+        st.className = "save-status wait";
+        st.textContent = "جاري حفظ علامتك... ⏳";
+
+        var attempt;
+        try {
+            if (typeof window.saveScoreToFirebase !== "function") {
+                attempt = Promise.reject({ code: "firebase-not-loaded" });
+            } else {
+                attempt = Promise.resolve(window.saveScoreToFirebase(studentName, score, questions.length));
+            }
+        } catch (e) {
+            attempt = Promise.reject(e);
+        }
+
+        withTimeout(attempt, 15000).then(function () {
+            st.className = "save-status ok";
+            st.textContent = "✅ تم حفظ علامتك وإرسالها للمعلم";
+        }, function (e) {
+            console.error(e);
+            st.className = "save-status err";
+            st.textContent = "⚠️ لم يتم حفظ العلامة، تأكد من اتصال الإنترنت. رمز الخطأ: " + ((e && (e.code || e.message)) || "unknown");
+            retry.style.display = "block";
+        });
+    }
+
+    function showResults() {
+        document.getElementById("quiz-screen").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        document.getElementById("final-score").textContent = score + " / " + questions.length;
+
+        var stars = "⭐";
+        var msg = "محاولة جيدة! يمكنك المراجعة وإعادة اللعبة للوصول للدرجة الكاملة.";
+        if (score === questions.length) {
+            stars = "⭐⭐⭐";
+            msg = "ما شاء الله! إجابات كاملة وممتازة! أنت بطل في معرفة قصص الأنبياء! 🏆";
+        } else if (score >= questions.length / 2) {
+            stars = "⭐⭐";
+            msg = "أحسنت! نتيجة رائعة ومعلومات جيدة جداً! 👏";
+        }
+
+        document.getElementById("stars-display").textContent = stars;
+        document.getElementById("result-message").textContent = msg;
+
+        saveScore();
+    }
+
+    function restartGame() {
+        unlockAudio();
+        currentQuestion = 0;
+        score = 0;
+        document.getElementById("retry-btn").style.display = "none";
+        document.getElementById("result-screen").style.display = "none";
+        document.getElementById("quiz-screen").style.display = "block";
+        loadQuestion();
+    }
+
+    /* زر Enter / تم في لوحة المفاتيح يبدأ اللعبة */
+    document.getElementById("student-name").addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.keyCode === 13) {
+            e.preventDefault();
+            startGame();
+        }
+    });
+</script>
+
+<!-- للمتصفحات القديمة جداً التي لا تدعم وحدات JavaScript -->
+<script nomodule>
+    window.saveScoreToFirebase = function () { return Promise.reject({ code: "browser-too-old" }); };
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { initializeFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJvnXeD_ksqWYSCI1pK7R-Lin2urrMDjA",
+        authDomain: "examschool110670.firebaseapp.com",
+        projectId: "examschool110670",
+        storageBucket: "examschool110670.firebasestorage.app",
+        messagingSenderId: "682365042133",
+        appId: "1:682365042133:web:035f26588f979a84ebd15c",
+        measurementId: "G-GVQH5E8SH4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+
+    // الكشف التلقائي عن Long Polling: يحل مشاكل الاتصال في سفاري/آيفون وشبكات المدارس
+    const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+    window.saveScoreToFirebase = async (name, score, total) => {
+        await addDoc(collection(db, "results"), {
+            name: name,
+            score: score,
+            total: total,
+            game: "noah-ark-grade5",
+            createdAt: serverTimestamp()
+        });
+    };
+</script>
+</body>
+</html>
