@@ -1,0 +1,1439 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>سباق الصناديق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: one full-bleed canvas road scene, with DOM panels (start, question sheet, harvest, review) layered on top. */
+:root{
+  color-scheme: dark;
+  --ink:#0c2a32;
+  --panel:#123a46;
+  --panel2:#18505f;
+  --line:rgba(255,255,255,.16);
+  --text:#f3f7f4;
+  --muted:#a9c9cb;
+  --gold:#f7b733;
+  --gold2:#d9930f;
+  --ok:#35c47c;
+  --bad:#ee5a47;
+  --display:'Lalezar','Tajawal','Segoe UI',Tahoma,sans-serif;
+  --body:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;height:100dvh;overscroll-behavior:none;touch-action:manipulation}
+body{
+  margin:0; background:var(--ink); color:var(--text); font-family:var(--body);
+  direction:rtl; overflow:hidden; -webkit-user-select:none; user-select:none;
+  -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; -webkit-text-size-adjust:100%; text-size-adjust:100%;
+}
+#stage{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;background:var(--ink)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{touch-action:manipulation;-webkit-touch-callout:none}
+.card,.sheet{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+/* shared panels */
+.layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:16px max(16px,env(safe-area-inset-left,0px)) 16px max(16px,env(safe-area-inset-right,0px))}
+.layer.dim{background:linear-gradient(180deg,rgba(12,42,50,.50),rgba(12,42,50,.86))}
+.card{width:min(680px,100%);max-height:100%;overflow:auto;background:rgba(12,42,50,.94);
+  border:1px solid var(--line);border-radius:22px;padding:clamp(18px,3.2vw,30px);
+  box-shadow:0 18px 60px rgba(0,0,0,.45)}
+.eyebrow{margin:0 0 4px;color:var(--gold);font-weight:700;letter-spacing:.04em;font-size:.95rem}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(2.4rem,7vw,3.8rem)}
+h2{font-size:clamp(1.7rem,4.6vw,2.4rem)}
+.lead{margin:10px 0 0;color:var(--muted);font-size:1.05rem;line-height:1.7}
+.btn{border:0;border-radius:14px;padding:13px 26px;font-size:1.15rem;font-weight:800;
+  background:var(--gold);color:#3a2300;box-shadow:0 4px 0 var(--gold2);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--gold2)}
+.btn.ghost{background:transparent;color:var(--text);box-shadow:none;border:2px solid var(--line)}
+.btn.ghost:active{transform:none}
+.row{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.muted{color:var(--muted)}
+
+/* start */
+.rules{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
+.rules li{display:flex;gap:12px;align-items:flex-start;line-height:1.6;font-size:1.02rem}
+.rules svg{flex:none;width:30px;height:30px;margin-top:2px}
+.keys{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px;color:var(--muted);font-size:.95rem}
+kbd{display:inline-block;min-width:1.9em;text-align:center;padding:2px 8px;border-radius:7px;
+  background:var(--panel2);border:1px solid var(--line);border-bottom-width:3px;color:var(--text);
+  font-family:var(--body);font-weight:700;font-size:.95em}
+
+/* HUD */
+#hud{position:absolute;inset:0;pointer-events:none}
+#pips{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;padding:7px 10px;background:rgba(12,42,50,.62);border-radius:12px;border:1px solid var(--line);
+  max-width:calc(100% - 140px)}
+.pip{flex:0 1 auto;min-width:8px;width:clamp(10px,2.6vw,19px);aspect-ratio:1;border-radius:4px;border:2px solid rgba(255,255,255,.5);position:relative}
+.pip.next{border-color:var(--gold);animation:pulse 1.1s ease-in-out infinite}
+.pip.got{background:var(--gold);border-color:#fff}
+.pip.got::after{content:"";position:absolute;inset:18% 30% 28% 30%;border:solid #3a2300;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.pip.miss{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28)}
+.pip.miss::after{content:"×";position:absolute;inset:0;display:grid;place-items:center;font-size:.8rem;line-height:1;color:var(--bad);font-weight:800}
+@keyframes pulse{50%{transform:scale(1.18)}}
+@media (max-width:560px){
+  #pips{left:auto;right:max(12px,env(safe-area-inset-right,0px));transform:none;max-width:calc(100% - 128px);gap:3px;padding:6px 7px}
+  #prog{left:auto;right:max(12px,env(safe-area-inset-right,0px));transform:none;width:calc(100% - 140px)}
+}
+#prog{position:absolute;top:calc(52px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);
+  width:min(300px,calc(100% - 160px));height:5px;border-radius:5px;background:rgba(255,255,255,.22);overflow:hidden}
+#progFill{display:block;height:100%;width:0;background:var(--gold);border-radius:5px}
+#speedo{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:max(16px,env(safe-area-inset-left,0px));
+  padding:8px 14px;background:rgba(12,42,50,.62);border-radius:14px;border:1px solid var(--line);
+  display:flex;align-items:baseline;gap:6px}
+#speedo b{font-family:var(--display);font-weight:400;font-size:2rem;line-height:1;min-width:1.6em;text-align:center}
+#speedo span{color:var(--muted);font-size:.85rem}
+.tools{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));display:flex;gap:8px;pointer-events:auto}
+.ibtn{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:rgba(12,42,50,.7);color:var(--text);
+  display:grid;place-items:center;padding:0}
+.ibtn svg{width:22px;height:22px}
+#hint{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:auto;right:max(16px,env(safe-area-inset-right,0px));transform:none;left:50%;transform:translateX(-50%);
+  background:rgba(12,42,50,.72);border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:.95rem;
+  white-space:nowrap;transition:opacity .6s}
+#hint.off{opacity:0}
+#touch{position:absolute;inset:auto 0 calc(12px + env(safe-area-inset-bottom,0px)) 0;pointer-events:none;height:0}
+.tb{position:absolute;bottom:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.4);
+  background:rgba(12,42,50,.55);color:#fff;display:grid;place-items:center;pointer-events:auto;touch-action:none;padding:0}
+.tb svg{width:30px;height:30px}
+.tb.on{background:rgba(247,183,51,.75);border-color:#fff}
+.tb{width:78px;height:78px}
+.tb svg{width:34px;height:34px}
+#tL{left:max(10px,env(safe-area-inset-left,0px));bottom:84px}
+#tR{right:max(10px,env(safe-area-inset-right,0px));bottom:84px}
+
+/* name + credit */
+.field{margin-top:18px;display:grid;gap:8px;max-width:420px}
+.field label{font-weight:800;font-size:1.05rem}
+.field input{font-family:var(--body);font-size:17px;font-weight:700;color:var(--text);background:var(--panel2);
+  border:2px solid var(--line);border-radius:14px;padding:12px 14px;width:100%;direction:rtl;-webkit-user-select:text;user-select:text}
+.field input:focus{outline:none;border-color:var(--gold)}
+.field input.err{border-color:var(--bad)}
+.ferr{margin:0;color:#ff8a78;font-size:.95rem;min-height:1.4em}
+.credit{margin:16px 0 0;color:var(--muted);font-size:1rem}
+.credit b{color:var(--gold);font-weight:800}
+.credit.sm{font-size:.78rem;text-align:center;margin:12px 0 0;opacity:.85}
+.credit.sm b{font-weight:700}
+#hname{text-align:center;margin:4px 0 0;font-size:1.15rem;font-weight:800}
+#hsave{text-align:center;margin:8px 0 0;font-size:.9rem;color:var(--muted);min-height:1.3em}
+#hsave.ok{color:var(--ok)}#hsave.bad{color:#ff8a78}
+#qnext:disabled{opacity:.55;cursor:default;transform:none;box-shadow:0 4px 0 var(--gold2)}
+
+/* countdown */
+#count{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+#count span{font-family:var(--display);font-size:clamp(5rem,22vw,11rem);color:#fff;
+  text-shadow:0 6px 0 var(--gold2),0 10px 40px rgba(0,0,0,.45);animation:pop .9s ease-out both}
+@keyframes pop{0%{transform:scale(.4);opacity:0}25%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:.9}}
+
+/* question sheet */
+.sheet{position:absolute;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);
+  width:min(780px,calc(100% - 32px));max-height:calc(100% - 24px);overflow:auto;background:rgba(12,42,50,.95);
+  border:1px solid var(--line);border-radius:22px;padding:14px clamp(14px,2.6vw,24px) 18px;
+  box-shadow:0 18px 60px rgba(0,0,0,.5);animation:rise .28s ease-out both}
+@keyframes rise{from{transform:translate(-50%,26px);opacity:0}}
+.qtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.92rem}
+.tag{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-weight:700}
+.qnum{color:var(--muted)}
+.qclock{margin-inline-start:auto;font-family:var(--display);font-size:1.7rem;line-height:1;min-width:1.6em;text-align:center}
+.qclock.low{color:var(--bad)}
+.bar{height:8px;border-radius:8px;background:rgba(255,255,255,.14);overflow:hidden;margin:8px 0 12px}
+.bar i{display:block;height:100%;width:100%;background:var(--gold);border-radius:8px;transform-origin:right}
+.bar i.low{background:var(--bad)}
+#qtext{font-family:var(--body);font-weight:800;font-size:clamp(1.12rem,2.9vw,1.5rem);line-height:1.6;margin:0 0 12px}
+.opts{display:grid;gap:9px;grid-template-columns:1fr 1fr}
+@media (max-width:620px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;gap:10px;align-items:center;text-align:start;border:2px solid var(--line);border-radius:14px;
+  padding:10px 12px;background:var(--panel2);color:var(--text);font-size:clamp(1rem,2.4vw,1.12rem);font-weight:500;line-height:1.5}
+.opt .n{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;font-weight:800;font-size:.95rem}
+.opt:hover:not(:disabled){border-color:var(--gold)}
+.opt:disabled{cursor:default}
+.opt.right{background:rgba(53,196,124,.22);border-color:var(--ok)}
+.opt.right .n{background:var(--ok);color:#06301a}
+.opt.wrong{background:rgba(238,90,71,.22);border-color:var(--bad)}
+.opt.wrong .n{background:var(--bad);color:#fff}
+.opt.dim{opacity:.5}
+#qfeed{margin-top:12px;display:grid;gap:8px}
+#qverdict{margin:0;font-weight:800;font-size:1.2rem}
+#qverdict.ok{color:var(--ok)}#qverdict.bad{color:#ff8a78}
+#qwhy{margin:0;color:var(--muted);line-height:1.7;font-size:1rem}
+#qfeed .btn{justify-self:start}
+
+/* harvest */
+.hwrap{display:grid;gap:4px}
+@media (min-width:860px){
+  #hcard{width:min(940px,100%)}
+  .hwrap{grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:34px;align-items:center;margin-top:6px}
+}
+.hgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:340px;margin:18px auto 0}
+.gbox{aspect-ratio:1;border-radius:10px;position:relative;display:grid;place-items:center;
+  border:2px dashed rgba(255,255,255,.28);color:rgba(255,255,255,.4);font-weight:800;font-size:1.3rem}
+.gbox.got{border:2px solid #fff;background:linear-gradient(#ffcb52,var(--gold2));color:transparent;animation:pop2 .45s ease-out both}
+.gbox.got::before{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 5px);width:10px;background:#b3361f}
+.gbox.got::after{content:"";position:absolute;left:0;right:0;top:calc(38% - 4px);height:8px;background:#b3361f}
+.gbox.miss{animation:fade .35s ease-out both}
+@keyframes pop2{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes fade{from{opacity:0}}
+.hcount{text-align:center;color:var(--muted);margin:14px 0 0;font-size:1.05rem;min-height:1.6em}
+.score{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-top:6px}
+.score b{font-family:var(--display);font-weight:400;font-size:clamp(3.4rem,12vw,5.2rem);line-height:1;color:var(--gold)}
+.score span{font-size:1.5rem;color:var(--muted)}
+#hgrade{text-align:center;font-family:var(--display);font-size:1.9rem;margin:2px 0 0}
+.lchips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
+.lchip{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 12px;font-size:.92rem;line-height:1.4}
+.lchip b{color:var(--gold)}
+#hmeta{text-align:center;margin:12px 0 0;font-size:.95rem}
+#hresult .row{justify-content:center}
+#hresult{animation:fade .5s ease-out both}
+
+/* review */
+.rev{display:grid;gap:12px;margin-top:16px}
+.ritem{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:6px}
+.ritem h3{margin:0;font-size:1.1rem;line-height:1.6}
+.ritem p{margin:0;line-height:1.7}
+.ritem .you{color:#ff8a78}
+.ritem .right{color:var(--ok);font-weight:700}
+.ritem .why{color:var(--muted);font-size:.97rem}
+.ritem .pg{color:var(--muted);font-size:.85rem}
+
+@media (max-height:480px){
+  .sheet{padding:10px 14px 12px;bottom:calc(6px + env(safe-area-inset-bottom,0px));max-height:calc(100% - 12px)}
+  #qtext{font-size:1.05rem;margin-bottom:8px}
+  .opts{grid-template-columns:1fr 1fr;gap:6px}
+  .opt{padding:7px 10px;font-size:.95rem}
+  .bar{margin:6px 0 8px}
+  .tb{width:58px;height:58px}
+  .tb{width:64px;height:64px}
+  #tL,#tR{bottom:14px}
+  #speedo{display:none}
+  .card{padding:16px}
+  h1{font-size:2.2rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<div id="stage">
+  <canvas id="c" aria-label="مشهد السباق"></canvas>
+
+  <div id="hud" hidden>
+    <div id="pips" aria-label="تقدم الصناديق"></div>
+    <div id="prog"><i id="progFill"></i></div>
+    <div class="tools">
+      <button id="bPause" class="ibtn" aria-label="إيقاف مؤقت" title="إيقاف مؤقت (Esc)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      </button>
+      <button id="bMute" class="ibtn" aria-label="كتم الصوت" title="الصوت">
+        <svg id="icSound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg id="icMute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+      </button>
+    </div>
+    <div id="speedo"><b id="spd">0</b><span>كم/س</span></div>
+    <div id="hint">↑ أسرع · ↓ فرامل · ← → وجّه الدراجة</div>
+    <div id="touch" hidden>
+      <button id="tL" class="tb" aria-label="يسار"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button id="tR" class="tb" aria-label="يمين"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </div>
+
+  <div id="count" aria-live="assertive"></div>
+
+  <section id="start" class="layer dim">
+    <div class="card">
+      <p class="eyebrow">التربية الإسلامية · الفصل الأول – مراجعة الوحدة الثانية للصف السادس</p>
+      <h1>سباق الصناديق</h1>
+      <p class="lead">استمتع بقيادة دراجتك على الطريق، واصطدم بالصناديق الذهبية. في كل صندوق سؤال من دروسك، وعليك أن تجيب قبل أن ينتهي الوقت.</p>
+      <div class="keys" id="keysDesk">
+        <span><kbd>↑</kbd> أو <kbd>W</kbd> أسرع</span>
+        <span><kbd>↓</kbd> أو <kbd>S</kbd> فرامل</span>
+        <span><kbd>←</kbd> <kbd>→</kbd> أو <kbd>A</kbd> <kbd>D</kbd> توجيه</span>
+        <span><kbd>1</kbd>–<kbd>4</kbd> اختيار الإجابة</span>
+      </div>
+      <p class="keys" id="keysTouch" hidden>الدراجة تسير إلى الأمام وحدها، ووجّهها بالسهمين على طرفَي الشاشة.</p>
+      <div id="fName" class="field">
+        <label for="pname">اكتب اسمك</label>
+        <input id="pname" name="pname" type="text" maxlength="40" enterkeyhint="go" placeholder="الاسم الثلاثي" autocomplete="off">
+        <p id="ferr" class="ferr" aria-live="polite"></p>
+        <div class="row" style="margin-top:2px"><button id="bStart" class="btn" type="button">ابدأ السباق</button></div>
+      </div>
+      <p class="credit">إعداد وتصميم المعلم <b>عادل خضر</b></p>
+    </div>
+  </section>
+
+  <section id="qsheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="qtext">
+    <div class="qtop"><span id="qtag" class="tag"></span><span id="qnum" class="qnum"></span><span id="qclock" class="qclock">20</span></div>
+    <div class="bar"><i id="qbar"></i></div>
+    <h2 id="qtext"></h2>
+    <div id="qopts" class="opts"></div>
+    <div id="qfeed" hidden>
+      <p id="qverdict"></p>
+      <p id="qwhy"></p>
+      <button id="qnext" class="btn" type="button">متابعة السباق</button>
+    </div>
+    <p class="credit sm">إعداد وتصميم المعلم <b>عادل خضر</b></p>
+  </section>
+
+  <section id="pause" class="layer dim" hidden>
+    <div class="card" style="width:min(420px,100%)">
+      <h2>السباق متوقف</h2>
+      <div class="row"><button id="bResume" class="btn">متابعة</button><button id="bRestartP" class="btn ghost">سباق جديد</button></div>
+    </div>
+  </section>
+
+  <section id="harvest" class="layer dim" hidden>
+    <div class="card" id="hcard">
+      <p class="eyebrow" style="text-align:center">وصلت إلى خط النهاية</p>
+      <h2 style="text-align:center">حصاد الصناديق</h2>
+      <p id="hname"></p>
+      <p class="credit sm" style="margin-top:4px">إعداد وتصميم المعلم <b>عادل خضر</b></p>
+      <div class="hwrap">
+      <div class="hleft"><div id="hgrid" class="hgrid"></div>
+      <p id="hcount" class="hcount"></p></div>
+      <div id="hresult" hidden>
+        <div class="score"><b id="hscore">0</b><span>من 15</span></div>
+        <p id="hgrade"></p>
+        <div id="hlessons" class="lchips"></div>
+        <p id="hmeta" class="muted"></p>
+        <p id="hsave" aria-live="polite"></p>
+        <div class="row"><button id="bReview" class="btn ghost">راجع الأسئلة</button><button id="bAgain" class="btn">سباق جديد</button></div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="review" class="layer dim" hidden>
+    <div class="card" style="width:min(760px,100%)">
+      <h2>مراجعة الأسئلة</h2>
+      <p id="revIntro" class="lead"></p>
+      <div id="revList" class="rev"></div>
+      <div class="row"><button id="bBack" class="btn ghost">رجوع إلى النتيجة</button><button id="bAgain2" class="btn">سباق جديد</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ================= إعدادات Firebase =================
+   انسخ القيمتين من: Firebase Console ← Project settings ← Your apps ← SDK setup and configuration
+   تُحفظ النتائج في Cloud Firestore داخل المجموعة FIREBASE_COLLECTION. */
+const FIREBASE_CONFIG = {
+  apiKey:    "",   // مثال: "AIzaSy..."
+  projectId: ""    // مثال: "islamic-race"
+};
+const FIREBASE_COLLECTION = "race_results";
+/* ==================================================== */
+document.documentElement.lang='ar';
+document.documentElement.dir='rtl';
+(function(){
+'use strict';
+
+/* ========== helpers ========== */
+const $=s=>document.querySelector(s);
+const AR=n=>String(n);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeIn=(a,b,p)=>a+(b-a)*p*p;
+const easeInOut=(a,b,p)=>a+(b-a)*((-Math.cos(p*Math.PI)/2)+0.5);
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ========== questions (the first option is the correct one; options are shuffled at run time) ========== */
+const LESSONS=[
+  {n:1,t:'سورة الأنفال (2–4)'},
+  {n:2,t:'نعيم الجنة'},
+  {n:3,t:'الإدغام الشفوي'},
+  {n:4,t:'سيدنا عثمان بن عفان'},
+  {n:5,t:'صلاة المسبوق'}
+];
+const QUESTIONS=[
+  /* ===== الدرس 1: سورة الأنفال (2–4) ===== */
+  {l:1,p:34,q:'ما معنى كلمة «وَجِلَتْ» في قوله تعالى: ﴿إِذَا ذُكِرَ اللَّهُ وَجِلَتْ قُلُوبُهُمْ﴾؟',
+   o:['خافت','فرحت','نسيت','اطمأنت'],
+   why:'«وجلت» تعني خافت. المؤمنون إذا ذُكر الله خافت قلوبهم من عدم رضاه، فأسرعوا إلى طاعته والابتعاد عن المحرمات.'},
+  {l:1,p:34,q:'ما معنى كلمة «يَتَوَكَّلُونَ» في قوله تعالى: ﴿وَعَلَىٰ رَبِّهِمْ يَتَوَكَّلُونَ﴾؟',
+   o:['يعتمدون','يخافون','يدعون','يتعلمون'],
+   why:'«يتوكلون» تعني يعتمدون. فالمؤمن يجتهد ويعمل، ثم يعتمد على الله تعالى ويلجأ إليه.'},
+  {l:1,p:34,q:'ما معنى كلمة «دَرَجَاتٌ» في قوله تعالى: ﴿لَّهُمْ دَرَجَاتٌ عِندَ رَبِّهِمْ﴾؟',
+   o:['منازل عالية في الجنة','أموال كثيرة في الدنيا','سلالم في المسجد','أعمال صالحة'],
+   why:'«درجات» تعني منازل عالية في الجنة، يمنحها الله للمؤمنين بحسب أعمالهم.'},
+  {l:1,p:34,q:'سورة الأنفال سورة مدنية، فكم عدد آياتها؟',
+   o:['75 آية','40 آية','110 آيات','286 آية'],
+   why:'سورة الأنفال سورة مدنية، وعدد آياتها خمس وسبعون (75) آية.'},
+  {l:1,p:35,q:'ماذا يحدث لإيمان المؤمنين إذا تُليت عليهم آيات القرآن الكريم؟',
+   o:['يزداد إيمانهم','يبقى كما هو','ينقص إيمانهم','ينشغلون عنه'],
+   why:'قال تعالى: ﴿وَإِذَا تُلِيَتْ عَلَيْهِمْ آيَاتُهُ زَادَتْهُمْ إِيمَانًا﴾، فهم يستمعون ويتدبرون ويصدقون ويعملون بأحكامها.'},
+  {l:1,p:35,q:'أيُّ الأعمال الآتية يُنقص الإيمان؟',
+   o:['الغش في الامتحان','تلاوة القرآن الكريم','ردّ الأمانة إلى صاحبها','زيارة الأقارب'],
+   why:'الإيمان يزيد بالطاعات وينقص بالمعاصي، والغش في الامتحان معصية. أما التلاوة وردّ الأمانة وزيارة الأقارب فطاعات تزيد الإيمان.'},
+  {l:1,p:35,q:'أيُّ المواقف الآتية يدل على التوكل على الله؟',
+   o:['يجتهد الطالب في دراسته ثم يدعو الله أن يوفقه','ينتظر الطالب النجاح دون أن يدرس','يترك الطالب المذاكرة ويكتفي بالدعاء','يقول الطالب: لا فائدة من الدراسة'],
+   why:'المؤمن يجتهد ويعمل، ثم يعتمد على الله ويلجأ إليه بالدعاء. وليس من التوكل أن ينتظر الإنسان ثمراً دون أن يغرس شجرة، أو أن ينجح دون أن يدرس.'},
+  {l:1,p:36,q:'على أيِّ صفة من صفات المؤمنين يدل قوله تعالى: ﴿الَّذِينَ يُقِيمُونَ الصَّلَاةَ﴾؟',
+   o:['المحافظة على الصلاة','الإنفاق في سبيل الله','الخوف من الله تعالى','التوكل على الله'],
+   why:'المؤمنون يدركون أهمية الصلاة، فيحرصون على أدائها بتأنٍّ وخشوع، ويسارعون إلى إقامتها في وقتها بأفضل هيئة.'},
+  {l:1,p:36,q:'على أيِّ صفة من صفات المؤمنين يدل قوله تعالى: ﴿وَمِمَّا رَزَقْنَاهُمْ يُنفِقُونَ﴾؟',
+   o:['الإنفاق في سبيل الله','المحافظة على الصلاة','زيادة الإيمان بالقرآن','الخوف من الله'],
+   why:'المؤمنون يبادرون إلى الإنفاق مما رزقهم الله، فيخرجون الزكاة الواجبة لمستحقيها، ويقدّمون الصدقة المستحبة في وجوه الخير.'},
+  {l:1,p:36,q:'لماذا وصف الله تعالى أصحاب هذه الصفات بأنهم ﴿هُمُ الْمُؤْمِنُونَ حَقًّا﴾؟',
+   o:['لأنهم جمعوا بين الإيمان بالقلب والعمل بالجوارح','لأنهم أكثر الناس مالاً','لأنهم يحفظون القرآن كله','لأنهم لا يخطئون أبداً'],
+   why:'لأنهم جمعوا بين الإيمان بالقلب والعمل بالجوارح، فاكتمل إيمانهم واستحقوا الجزاء الذي أعدّه الله لهم.'},
+  {l:1,p:36,q:'ما المقصود بـ«الرزق الكريم» الذي أعدّه الله للمؤمنين في قوله تعالى: ﴿وَمَغْفِرَةٌ وَرِزْقٌ كَرِيمٌ﴾؟',
+   o:['رزق واسع في الجنة من كل ما يحبون ويشتهون','مال كثير في الحياة الدنيا','مغفرة الذنوب فقط','منازل عالية في الدنيا'],
+   why:'رزقهم الله رزقاً واسعاً في الجنة من كل ما يحبون ويشتهون من النعيم والخير. أما المغفرة فهي أن يغفر ذنوبهم ويتجاوز عن سيئاتهم.'},
+  {l:1,p:37,q:'متى نزلت سورة الأنفال؟ وما معنى «الأنفال»؟',
+   o:['بعد يوم بدر، والأنفال هي الغنائم','قبل الهجرة، والأنفال هي الصلوات','بعد فتح مكة، والأنفال هي الأسرى','يوم أُحد، والأنفال هي الخيول'],
+   why:'نزلت سورة الأنفال بعد يوم بدر الذي وقع في السنة الثانية للهجرة. والأنفال هي الغنائم التي يكسبها المقاتلون بعد المعركة.'},
+
+  /* ===== الدرس 2: نعيم الجنة ===== */
+  {l:2,p:41,q:'ما الجنة؟',
+   o:['دار الثواب والنعيم الدائم في الآخرة، أعدها الله للمؤمنين','دار العمل والاختبار في الحياة الدنيا','المكان الذي يُحاسَب فيه الناس يوم القيامة','حديقة جميلة في الدنيا'],
+   why:'الجنة هي دار الثواب والنعيم الدائم في الآخرة، أعدّها الله لعباده المؤمنين جزاءً لهم على إيمانهم وطاعتهم.'},
+  {l:2,p:41,q:'ما اسم أعلى الجنة وأفضلها، الذي أمرنا النبي ﷺ أن نسأل الله إياه؟',
+   o:['الفردوس','الكوثر','البقيع','الطور'],
+   why:'قال رسول الله ﷺ: «إذا سألتم الله فاسألوه الفردوس». وهو أعلى الجنة وأفضلها، يفوز به الأنبياء والصديقون والشهداء والصالحون.'},
+  {l:2,p:41,q:'ماذا تقول الملائكة للمؤمنين حين تستقبلهم على أبواب الجنة؟',
+   o:['﴿ادْخُلُوهَا بِسَلَامٍ آمِنِينَ﴾','﴿اقْرَأْ كِتَابَكَ﴾','﴿يَا لَيْتَنِي كُنتُ تُرَابًا﴾','﴿قُلْ هُوَ اللَّهُ أَحَدٌ﴾'],
+   why:'حين يأذن الله للمؤمنين بدخول الجنة تستقبلهم الملائكة الكرام على أبوابها مرحّبين بهم، قائلين: ﴿ادْخُلُوهَا بِسَلَامٍ آمِنِينَ﴾.'},
+  {l:2,p:41,q:'ما معنى كلمة «الأَرَائِك» في قوله تعالى: ﴿عَلَى الْأَرَائِكِ يَنظُرُونَ﴾؟',
+   o:['الأسرّة','الأشجار','الأنهار','القصور'],
+   why:'«الأرائك» هي الأسرّة. و«نضرة النعيم» تعني السرور، و«رحيق مختوم» شراب طيب مخلوط بالمسك.'},
+  {l:2,p:41,q:'أيُّ العبارات الآتية تصف حال المؤمنين في الجنة؟',
+   o:['لا يمرضون، ولا يتعبون، ولا يتخاصمون','يمرضون أحياناً ثم يُشفَون','يتعبون من كثرة العمل','يتخاصمون ثم يتصالحون'],
+   why:'المؤمنون في الجنة لا يمرضون ولا يتعبون ولا يتخاصمون، وينزع الله تعالى ما في قلوبهم من الحسد والكره.'},
+  {l:2,p:42,q:'ما طريق دخول الجنة كما بيّنه قوله تعالى: ﴿إِنَّ الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ لَهُمْ جَنَّاتٌ﴾؟',
+   o:['الإيمان والعمل الصالح','كثرة المال','الإيمان وحده دون عمل','العمل دون إيمان'],
+   why:'الإيمان والعمل الصالح هما طريق دخول الجنة. ومن الأعمال الصالحة: إقامة الصلاة على وقتها، وبرّ الوالدين، وكفالة اليتيم، وتلاوة القرآن الكريم والعمل بما فيه.'},
+  {l:2,p:42,q:'قال ﷺ: «يُقال لصاحب القرآن: اقرأ وارتقِ ورتّل كما كنت ترتّل في الدنيا...». أين تكون منزلة صاحب القرآن في الجنة؟',
+   o:['عند آخر آية يقرؤها','عند أول سورة حفظها','عند باب الجنة','في المكان نفسه لجميع الناس'],
+   why:'تتمة الحديث: «فإنّ منزلك عند آخر آية تقرؤها». فتلاوة القرآن الكريم والعمل بما فيه من أسباب دخول الجنة وارتفاع الدرجات فيها.'},
+  {l:2,p:42,q:'كفل رسول الله ﷺ أعلى درجات الجنة لمن اتصف بصفة، فما هي؟',
+   o:['حسن الخلق ومعاملة الناس معاملة حسنة','كثرة الكلام','قوة الجسم','جمع المال'],
+   why:'قال ﷺ: «إنّ من أحبكم إليّ وأقربكم مني مجلساً يوم القيامة أحاسنكم أخلاقاً». فحسن الخلق من أسباب دخول الجنة.'},
+  {l:2,p:43,q:'ما العمل الصالح الذي يُدخل صاحبه الجنة في قوله ﷺ: «من سلك طريقاً يلتمس فيه علماً، سهّل الله له طريقاً إلى الجنة»؟',
+   o:['طلب العلم','السفر للتجارة','المشي في الطرقات','الرياضة'],
+   why:'من يسلك طريقاً يطلب فيه العلم النافع، يسهّل الله له طريقاً إلى الجنة.'},
+  {l:2,p:43,q:'ما الجزاء الذي ذكره النبي ﷺ لمن أفشى السلام، وأطعم الطعام، ووصل الأرحام، وصلى بالليل والناس نيام؟',
+   o:['يدخل الجنة بسلام','يزيد ماله في الدنيا','يُعفى من الحساب','يصبح من الأنبياء'],
+   why:'قال ﷺ: «أفشوا السلام، وأطعموا الطعام، وصلوا الأرحام، وصلوا بالليل والناس نيام، تدخلوا الجنة بسلام».'},
+  {l:2,p:43,q:'من شدة أهوال يوم القيامة، ماذا يتمنى الكافر؟',
+   o:['لو كان تراباً','لو كان ملكاً','لو عاش مرة أخرى بلا حساب','لو كان غنياً'],
+   why:'قال تعالى: ﴿وَيَقُولُ الْكَافِرُ يَا لَيْتَنِي كُنتُ تُرَابًا﴾. فمثلما أعدّ الله الجنة للمؤمنين، أعدّ النار للكافرين عقوبة على كفرهم وعصيانهم.'},
+  {l:2,p:44,q:'إذا تغيّرت حركة الجيم تغيّر المعنى. فما معنى «الجِنَّة» بكسر الجيم في قوله تعالى: ﴿مِنَ الْجِنَّةِ وَالنَّاسِ﴾؟',
+   o:['طائفة من الجن','المكان الذي أعده الله للمؤمنين','الحماية والوقاية','البستان في الدنيا'],
+   why:'الجَنّة (بالفتح): المكان الذي أعده الله للمؤمنين في الآخرة. الجِنّة (بالكسر): طائفة من الجن. الجُنّة (بالضم): الحماية والوقاية.'},
+
+  /* ===== الدرس 3: الإدغام الشفوي ===== */
+  {l:3,p:46,q:'ما معنى «الإدغام» في اللغة؟',
+   o:['الإدخال والدمج','الإظهار والبيان','الإخفاء والستر','القلب والتحويل'],
+   why:'الإدغام لغةً: الإدخال والدمج.'},
+  {l:3,p:46,q:'ما أحكام الميم الساكنة؟',
+   o:['الإدغام الشفوي، والإخفاء الشفوي، والإظهار الشفوي','الإدغام والإقلاب فقط','الإظهار الحلقي والإخفاء الحقيقي','القلقلة والمد والغنة'],
+   why:'أحكام الميم الساكنة ثلاثة: الإدغام الشفوي، والإخفاء الشفوي، والإظهار الشفوي.'},
+  {l:3,p:47,q:'ما الحرف الذي يأتي بعد الميم الساكنة في الإدغام الشفوي؟',
+   o:['الميم','الباء','الفاء','النون'],
+   why:'الإدغام الشفوي له حرف واحد هو الميم.'},
+  {l:3,p:47,q:'كيف تُنطق الميم الساكنة إذا جاءت بعدها ميم متحركة؟',
+   o:['تُدغم فيها فتصبحان ميماً واحدة مشددة مع الغنة','تُنطق الميمان منفصلتين دون غنة','تُقلب الميم الساكنة نوناً','تُخفى الميم الساكنة دون تشديد'],
+   why:'حين تأتي الميم المتحركة بعد الميم الساكنة، تُدغم الساكنة في المتحركة فتصبحان ميماً واحدة مشددة مع وجود الغنة، مثل: ﴿وَكَم مِّن﴾ تُلفظ «وكمّن».'},
+  {l:3,p:47,q:'ما الصحيح في مكان حكم الإدغام الشفوي؟',
+   o:['يأتي في كلمتين منفصلتين، ولا يأتي في كلمة واحدة','يأتي في كلمة واحدة فقط','يأتي في كلمة واحدة أو في كلمتين','يأتي في أول السورة فقط'],
+   why:'حكم الإدغام الشفوي يأتي في كلمتين منفصلتين، ولا يأتي في كلمة واحدة.'},
+  {l:3,p:47,q:'أيُّ العبارات الآتية فيها إدغام شفوي؟',
+   o:['﴿وَجَعَلَكُم مُّلُوكًا﴾','﴿لَمْ يَلِدْ وَلَمْ يُولَدْ﴾','﴿تَرْمِيهِم بِحِجَارَةٍ﴾','﴿قُلْ هُوَ اللَّهُ أَحَدٌ﴾'],
+   why:'في «جَعَلَكُم مُّلُوكًا» جاءت ميم ساكنة بعدها ميم متحركة، فتُدغم الميمان معاً. أما «لَمْ يَلِدْ» فبعد الميم ياء، و«تَرْمِيهِم بِحِجَارَةٍ» بعد الميم باء.'},
+  {l:3,p:48,q:'أيُّ المواضع الآتية فيه إدغام شفوي؟',
+   o:['﴿أَنَّهُم مَّبْعُوثُونَ﴾','﴿عَلَيْهِمْ وَلَا الضَّالِّينَ﴾','﴿أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ﴾','﴿الْحَمْدُ لِلَّهِ﴾'],
+   why:'في «أَنَّهُم مَّبْعُوثُونَ» ميم ساكنة بعدها ميم، فهو إدغام شفوي. أما «عَلَيْهِمْ وَلَا» فبعد الميم واو، و«أَلَمْ نَشْرَحْ» بعد الميم نون.'},
+  {l:3,p:48,q:'ما الحكم التجويدي في قوله تعالى: ﴿مِن وَرَائِهِم مُّحِيطٌ﴾؟',
+   o:['إدغام شفوي','إخفاء شفوي','إظهار شفوي','إقلاب'],
+   why:'في «وَرَائِهِم مُّحِيطٌ» جاءت ميم ساكنة في آخر كلمة، وبعدها ميم متحركة في أول الكلمة التالية، فهو إدغام شفوي.'},
+  {l:3,p:50,q:'أيُّ الآيات الآتية تتضمن حكم الإدغام الشفوي؟',
+   o:['﴿وَأَخْرَجُوكُم مِّن دِيَارِكُمْ﴾','﴿يَعْلَمُ مَا يُسِرُّونَ وَمَا يُعْلِنُونَ﴾','﴿لَمْ يَلِدْ وَلَمْ يُولَدْ﴾','﴿قُلْ أَعُوذُ بِرَبِّ النَّاسِ﴾'],
+   why:'في «أَخْرَجُوكُم مِّن» ميم ساكنة بعدها ميم متحركة. أما «يَعْلَمُ مَا» فالميم الأولى متحركة وليست ساكنة، فلا إدغام فيها.'},
+  {l:3,p:49,q:'كيف تُكتب الميمان في الرسم القرآني في الإدغام الشفوي، مثل: ﴿يَرْزُقُكُم مِّنَ﴾؟',
+   o:['الميم الأولى خالية من الحركة، والثانية مشددة','الميم الأولى عليها سكون، والثانية بلا شدة','الميمان عليهما شدة','الميم الأولى مشددة، والثانية ساكنة'],
+   why:'يُلاحظ في الرسم القرآني أنّ الميم الأولى في الإدغام الشفوي تكون خالية من الحركة، في حين تكون الميم الثانية مشددة.'},
+  {l:3,p:48,q:'ما معنى «الْحُسْنَىٰ» في قوله تعالى: ﴿وَكُلًّا وَعَدَ اللَّهُ الْحُسْنَىٰ﴾ من سورة الحديد؟',
+   o:['الجنة','المال','النصر في الدنيا','الصحة'],
+   why:'«الحسنى» في سورة الحديد تعني الجنة. ومن مفردات السورة أيضاً: «الفتح» فتح مكة المكرمة، و«نقتبس» نستضيء.'},
+  {l:3,p:48,q:'ما معنى «يُقْرِضُ اللَّهَ» في قوله تعالى: ﴿مَّن ذَا الَّذِي يُقْرِضُ اللَّهَ قَرْضًا حَسَنًا﴾؟',
+   o:['يُنفق في سبيل الله تعالى','يستدين من الناس','يقرأ القرآن','يصلي في المسجد'],
+   why:'«يقرض الله» تعني يُنفق في سبيل الله تعالى، والله يضاعف له الأجر وله أجر كريم.'},
+
+  /* ===== الدرس 4: سيدنا عثمان بن عفان ===== */
+  {l:4,p:52,q:'سيدنا عثمان بن عفان رضي الله عنه هو:',
+   o:['ثالث الخلفاء الراشدين','أول الخلفاء الراشدين','ثاني الخلفاء الراشدين','رابع الخلفاء الراشدين'],
+   why:'سيدنا عثمان بن عفان صحابي جليل من السابقين إلى الإسلام، وأحد العشرة المبشرين بالجنة، وثالث الخلفاء الراشدين.'},
+  {l:4,p:53,q:'لماذا لُقّب سيدنا عثمان بن عفان رضي الله عنه بـ«ذي النورين»؟',
+   o:['لأنه تزوج ابنتي رسول الله ﷺ: رقية ثم أم كلثوم','لأنه هاجر مرتين','لأنه نسخ المصحف','لأنه اشترى بئر رومة'],
+   why:'تزوج السيدة رقية بنت رسول الله ﷺ، وبعد وفاتها تزوج أختها السيدة أم كلثوم، فلُقّب بذي النورين. أما لقب «صاحب الهجرتين» فبسبب هجرته إلى الحبشة ثم إلى المدينة.'},
+  {l:4,p:53,q:'ما العمل الذي كان يعمل به سيدنا عثمان بن عفان رضي الله عنه؟',
+   o:['التجارة','الزراعة','الرعي','الحدادة'],
+   why:'كان عمله التجارة، وهو من قبيلة قريش، ووُلد في الطائف، وكان قبل الإسلام أحد سادات قريش الأغنياء.'},
+  {l:4,p:53,q:'مَن الصحابي الذي دعا سيدنا عثمان بن عفان إلى الإسلام؟',
+   o:['سيدنا أبو بكر الصديق','سيدنا عمر بن الخطاب','سيدنا علي بن أبي طالب','سيدنا حذيفة بن اليمان'],
+   why:'كان سيدنا عثمان صديقاً مقرّباً لسيدنا أبي بكر الصديق، فلما دعاه إلى الإسلام أسلم، فكان من السابقين إلى الإسلام.'},
+  {l:4,p:54,q:'قال رسول الله ﷺ: «...وأصدقهم حياءً عثمان». ما الصفة التي شهد بها النبي ﷺ لسيدنا عثمان؟',
+   o:['الحياء','الشجاعة في القتال','سرعة الغضب','كثرة الكلام'],
+   why:'كان سيدنا عثمان حريصاً على اجتناب كل قول أو فعل يُغضب الله تعالى، أو يُنافي الأدب، أو يُسيء إلى الآخرين، وقد شهد له النبي ﷺ بالحياء.'},
+  {l:4,p:54,q:'ماذا فعل سيدنا عثمان لما سمع النبي ﷺ يقول: «من حفر رومة فله الجنة»؟',
+   o:['اشترى بئر رومة وجعلها صدقة للمسلمين','حفر بئراً جديدة في مكة','اشترى بئر زمزم وتبرع بها','بنى مسجداً بجوار البئر'],
+   why:'أسرع فاشترى بئر رومة من رجل يهودي في المدينة المنورة، وجعلها صدقة للمسلمين. ولا يزال المسلمون ينتفعون بها، فهي صدقة جارية.'},
+  {l:4,p:54,q:'في غزوة تبوك تبرّع سيدنا عثمان بمال كثير لتجهيز الجيش، فماذا قال النبي ﷺ؟',
+   o:['«ما ضرّ عثمان ما عمل بعد اليوم»','«من حفر رومة فله الجنة»','«إذا سألتم الله فاسألوه الفردوس»','«اثبت أحد»'],
+   why:'سُرّ رسول الله ﷺ من فعله وقال: «ما ضرّ عثمان ما عمل بعد اليوم». وغزوة تبوك هي آخر معارك النبي ﷺ.'},
+  {l:4,p:55,q:'لما أصابت المسلمين مجاعة في عهد سيدنا عمر بن الخطاب، ماذا فعل سيدنا عثمان؟',
+   o:['تبرّع للفقراء بقافلة تجارية تحمل الطعام، ورفض الربح الكثير','باع الطعام للتجار بربح كبير','خزّن الطعام في بيته','سافر إلى الشام'],
+   why:'تبرّع للفقراء بقافلة تجارية له تحمل الطعام، مع أن كبار التجار في المدينة المنورة عرضوا عليه ربحاً كثيراً لقاء شرائها، لكنه رفض.'},
+  {l:4,p:55,q:'لماذا أنشأ سيدنا عثمان أول أسطول بحري في البحر الأبيض المتوسط؟',
+   o:['لتأمين السواحل وحماية المسلمين من الأعداء','للتجارة بين البلدان','لصيد الأسماك','للسفر إلى الحج'],
+   why:'استمر سيدنا عثمان في التصدّي لمن يحاربون المسلمين، وأنشأ أول أسطول بحري في البحر الأبيض المتوسط لتأمين السواحل وحماية المسلمين من الأعداء.'},
+  {l:4,p:55,q:'ما العمل الذي قام به سيدنا عثمان لما لاحظ حذيفة بن اليمان الخطأ في قراءة القرآن الكريم؟',
+   o:['كتب عدة نسخ من المصحف وأرسلها إلى البلدان','أنشأ أول أسطول بحري','وسّع المسجد النبوي','اشترى بئر رومة'],
+   why:'كلّف أربعة من الصحابة ممن تميّزوا بحفظ القرآن وإتقان القراءة والكتابة بكتابة سبع نسخ من المصحف، ثم أرسلها إلى البلدان لتكون مرجعاً للناس في القراءة السليمة.'},
+  {l:4,p:56,q:'لماذا وسّع سيدنا عثمان بن عفان المسجد النبوي؟',
+   o:['لأن عدد المسلمين زاد وضاق عليهم المسجد','لأن المسجد تهدّم بسبب السيل','لأنه أراد بناء قصر بجواره','لأن الصحابة رفضوا الصلاة فيه'],
+   why:'لما زاد عدد المسلمين وضاق عليهم المسجد النبوي، استشار الخليفة عثمان أهل الرأي، فأجمعوا على إعادة بناء المسجد وتوسيعه، ففعل.'},
+  {l:4,p:56,q:'متى تُوفّي سيدنا عثمان بن عفان رضي الله عنه؟ وأين دُفن؟',
+   o:['عام 35 للهجرة، ودُفن في البقيع','عام 13 للهجرة، ودُفن في مكة','عام 23 للهجرة، ودُفن في الطائف','عام 40 للهجرة، ودُفن في الشام'],
+   why:'تُوفّي سيدنا عثمان عام (35) للهجرة، ودُفن في البقيع.'},
+
+  /* ===== الدرس 5: صلاة المسبوق ===== */
+  {l:5,p:59,q:'ماذا يُطلق على الشخص الذي يتبع الإمام في أعمال الصلاة؟',
+   o:['المأموم','المؤذن','المسبوق دائماً','الخطيب'],
+   why:'الذي يتبعه المصلون في أعمال الصلاة هو الإمام، والذي يتبع الإمام هو المأموم. وصلاة الجماعة صلاة يؤدّيها المسلم خلف الإمام.'},
+  {l:5,p:60,q:'من هو المسبوق؟',
+   o:['المأموم الذي فاتته تكبيرة الإحرام مع الإمام في صلاة الجماعة','المصلي الذي يصلي وحده في بيته','الإمام الذي يؤم الناس في الصلاة','المصلي الذي يسلّم قبل إمامه'],
+   why:'المسبوق هو المأموم الذي فاتته تكبيرة الإحرام مع الإمام في صلاة الجماعة، وعليه أن يكمل مع الإمام حتى ينال فضل صلاة الجماعة.'},
+  {l:5,p:60,q:'أدرك المسبوق الإمام قبل أن يرفع من الركوع في الركعة الأولى. ما حكم هذه الركعة؟',
+   o:['حُسبت له الركعة، ويسلّم مع الإمام','فاتته الركعة، ويأتي بها بعد التسليم','تبطل صلاته ويعيدها','يصلي ركعتين زيادة'],
+   why:'إذا أدرك المسبوق الإمام قبل أن يرفع من الركوع في الركعة الأولى فقد حُسبت له تلك الركعة، وعليه أن يسلّم مع الإمام وإن لم يقرأ سورة الفاتحة.'},
+  {l:5,p:60,q:'أدرك المسبوق الإمام وهو ساجد في الركعة الأولى من صلاة المغرب. كم ركعة فاتته؟',
+   o:['ركعة واحدة','ركعتان','لا شيء، فقد أدرك الركعة كاملة','ثلاث ركعات'],
+   why:'إذا أدرك المسبوق الإمام بعد أن يرفع من الركوع في الركعة الأولى فقد فاتته تلك الركعة، فلا يسلّم مع الإمام، بل يقوم بعد تسليمه ويأتي بركعة بدلها، ثم يجلس للتشهد ويسلّم.'},
+  {l:5,p:61,q:'أدرك عاصم الإمام وهو في الجلوس للتشهد الأول من صلاة المغرب. كم ركعة فاتته؟',
+   o:['ركعتان','ركعة واحدة','ثلاث ركعات','لا شيء'],
+   why:'الإمام في التشهد الأول من المغرب قد صلى ركعتين، فقد فاتت عاصماً ركعتان، فلا يسلّم مع الإمام، بل يُتمّ وحده ما فاته من الركعات، ثم يتشهد ويسلّم.'},
+  {l:5,p:61,q:'أدركت سارة الإمام وهو ساجد في الركعة الثانية من صلاة العشاء. كم ركعة فاتتها؟',
+   o:['ركعتان','ركعة واحدة','ثلاث ركعات','أربع ركعات'],
+   why:'أدركته بعد الرفع من ركوع الركعة الثانية، ففاتتها الركعة الأولى والثانية، فعليها أن تأتي بركعتين بعد تسليم الإمام.'},
+  {l:5,p:60,q:'ماذا يفعل المسبوق إذا فاته أكثر من ركعة؟',
+   o:['لا يسلّم مع الإمام، ويُتمّ ما فاته ثم يتشهد ويسلّم','يسلّم مع الإمام ولا شيء عليه','يعيد الصلاة كلها من جديد','يأتي بركعة واحدة فقط'],
+   why:'إذا فات المسبوق أكثر من ركعة فإنه لا يسلّم مع الإمام، وإنما يُتمّ وحده ما فاته من الركعات، ثم يجلس ليقرأ التشهد والصلاة الإبراهيمية، ثم يسلّم.'},
+  {l:5,p:61,q:'أدرك المسبوق ركعة من صلاة الجمعة مع الإمام. ماذا يفعل بعد أن يسلّم الإمام؟',
+   o:['يأتي بركعة ثم يسلّم، فيكون قد أدرك صلاة الجمعة','يصلي أربع ركعات ظهراً','يخرج من الصلاة دون إتمامها','يكرر الركعة نفسها مرتين'],
+   why:'قال رسول الله ﷺ: «من أدرك ركعة من صلاة الجمعة أو غيرها فقد أدرك الصلاة». فيتابع الإمام، وبعد تسليمه يأتي بركعة ثم يسلّم.'},
+  {l:5,p:61,q:'لم يدرك المسبوق الركوع في الركعة الثانية من صلاة الجمعة. ماذا يصلي بعد تسليم الإمام؟',
+   o:['يصلي أربع ركعات ظهراً','يأتي بركعة واحدة ثم يسلّم','يأتي بركعتين جمعةً','يسلّم مع الإمام'],
+   why:'إذا لم يدرك الركوع في الركعة الثانية فينوي الظهر لا الجمعة ويتابع الإمام، وبعد تسليم الإمام يقوم فيصلي أربع ركعات ظهراً؛ لأنه لم يدرك صلاة الجمعة.'},
+  {l:5,p:63,q:'إذا وجد المسبوق الإمامَ في التشهد الأول، فماذا عليه أن يفعل؟',
+   o:['يكبّر تكبيرة الإحرام وهو واقف بسكينة ووقار، ثم يتابع الإمام','يجلس بسرعة دون تكبيرة الإحرام','ينتظر حتى يقوم الإمام للركعة الثالثة','يصلي وحده بعيداً عن الجماعة'],
+   why:'يكبّر المسبوق تكبيرة الإحرام وهو واقف بسكينة ووقار، ثم يتابع الإمام في الجلوس، ولا ينتظر قيام الإمام.'},
+  {l:5,p:63,q:'في أي حالة لا يُعدّ المصلّي مسبوقاً؟',
+   o:['إذا أدرك الإمام في تكبيرة الإحرام','إذا أدرك الإمام بعد الرفع من الركوع','إذا أدرك الإمام في السجود','إذا أدرك الإمام في التشهد الأخير'],
+   why:'المسبوق هو من فاتته تكبيرة الإحرام مع الإمام، فمن أدرك الإمام في تكبيرة الإحرام لا يُعدّ مسبوقاً.'},
+  {l:5,p:63,q:'من فاتته ركعة من الصلاة، فإنه يتابع الإمام في أفعال الصلاة كلها، باستثناء:',
+   o:['التسليم','التشهد','السجود','الركوع'],
+   why:'يتابع المسبوق الإمام في كل أفعال الصلاة، لكنه لا يسلّم معه، بل يقوم بعد تسليم الإمام ليأتي بما فاته ثم يسلّم.'}
+];
+const N=15, PER_LESSON=3, HINT_LOCK=7;
+
+/* ========== track ========== */
+const IS_TOUCH=!!(window.matchMedia&&matchMedia("(pointer: coarse)").matches);
+const SEG=200, ROAD=2000, DRAW=IS_TOUCH?160:210, CAM_H=1000, FOV=100;
+const CAM_DEPTH=1/Math.tan((FOV/2)*Math.PI/180);
+const PLAYER_Z=CAM_H*CAM_DEPTH;
+const MAXV=SEG*60, CRUISE=MAXV*0.6, ACCEL=MAXV/4, BRAKE=MAXV*0.8, COAST=MAXV*0.18;
+const CENTRI=0.22, QTIME=20, STOP_GAP=2600, STOP_DECEL=MAXV*0.35, APPROACH=18500;
+const LANE_X=[-0.667,0,0.667];
+const FOG=[236,217,174];
+const KMH=38;
+
+let segments=[], gates=[], finishZ=0, trackLen=0;
+const mkP=(y,z)=>({wy:y,wz:z,kx:0,ky:0,kz:0,sc:0,sx:0,sy:0,sw:0});
+function lastY(){return segments.length?segments[segments.length-1].p2.wy:0}
+function addSeg(curve,y){
+  const n=segments.length, py=lastY();
+  segments.push({i:n,curve,sprites:[],fog:1,clip:0,p1:mkP(py,n*SEG),p2:mkP(y,(n+1)*SEG),c:Math.floor(n/3)%2});
+}
+function addRoad(e,h,l,curve,y){
+  const sY=lastY(), eY=sY+y*SEG, tot=e+h+l;
+  for(let n=0;n<e;n++) addSeg(easeIn(0,curve,n/e),easeInOut(sY,eY,n/tot));
+  for(let n=0;n<h;n++) addSeg(curve,easeInOut(sY,eY,(e+n)/tot));
+  for(let n=0;n<l;n++) addSeg(easeInOut(curve,0,n/l),easeInOut(sY,eY,(e+h+n)/tot));
+}
+function buildTrack(){
+  segments=[];gates=[];
+  const r=rng(2024);
+  addRoad(0,120,0,0,0);
+  for(let i=0;i<N;i++){
+    const b0=segments.length;
+    while(segments.length-b0<200){
+      const t=r();
+      if(t<0.2) addRoad(0,40,0,0,0);
+      else if(t<0.62){const c=[1.2,2,3][Math.floor(r()*3)]*(r()<.5?-1:1);addRoad(25,30,25,c,0);}
+      else if(t<0.86){const hh=10+Math.floor(r()*12);addRoad(20,15,20,0,hh);addRoad(20,15,20,0,-hh);}
+      else {const c=r()<.5?1.6:-1.6;addRoad(18,20,18,c,0);addRoad(18,20,18,-c,0);}
+    }
+    addRoad(0,130,0,0,0);
+    const gs=segments.length-40;
+    gates.push({seg:gs,z:gs*SEG,result:null,q:null,order:null,scr:null});
+    segments[gs].sprites.push({type:'gate',off:0,gi:i});
+  }
+  addRoad(0,240,0,0,0);
+  const fs=gates[N-1].seg+160;
+  finishZ=fs*SEG;
+  segments[fs].sprites.push({type:'finish',off:0});
+  addRoad(0,380,0,0,0);
+  trackLen=segments.length*SEG;
+  decorate();
+  placeCones();
+}
+function decorate(){
+  const r=rng(7);
+  for(let n=6;n<segments.length;n+=3){
+    for(const side of [-1,1]){
+      if(r()<0.5){
+        const roll=r();let type,off;
+        if(roll<0.36){type='palm';off=1.3+r()*0.9}
+        else if(roll<0.66){type='olive';off=1.3+r()*1.1}
+        else if(roll<0.80){type='house';off=2.3+r()*1.5}
+        else if(roll<0.9){type='bush';off=1.25+r()*0.9}
+        else {type='rock';off=1.3+r()*1.2}
+        segments[n].sprites.push({type,off:side*off,v:Math.floor(r()*1000)});
+      }
+    }
+  }
+  for(let k=0;k<4;k++){
+    const n=500+k*1500;
+    if(n<segments.length-400) segments[n].sprites.push({type:'mosque',off:(k%2?-1:1)*3.4,v:k});
+  }
+}
+function placeCones(){
+  const r=rng(99);
+  gates.forEach((g,i)=>{
+    if(i===0) return;
+    const from=gates[i-1].seg+45, to=g.seg-125;
+    const cnt=3+Math.floor(r()*3);
+    for(let c=0;c<cnt;c++){
+      const sn=from+Math.floor(r()*(to-from));
+      const a=Math.floor(r()*3);
+      segments[sn].sprites.push({type:'cone',off:LANE_X[a],hit:false});
+      if(r()<0.4) segments[sn].sprites.push({type:'cone',off:LANE_X[(a+1+Math.floor(r()*2))%3],hit:false});
+    }
+  });
+}
+buildTrack();
+const segAt=z=>segments[Math.floor(z/SEG)%segments.length];
+
+/* ========== canvas ========== */
+const stage=$('#stage'), cv=$('#c'), ctx=cv.getContext('2d');
+let W=2,H=2;
+function resize(){
+  const r=stage.getBoundingClientRect(), dpr=Math.min(window.devicePixelRatio||1,IS_TOUCH?1.25:1.5);
+  W=Math.max(2,Math.round(r.width*dpr));H=Math.max(2,Math.round(r.height*dpr));
+  cv.width=W;cv.height=H;
+}
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage); else addEventListener('resize',resize);
+resize();
+
+/* ========== game state ========== */
+const G={
+  state:'attract', prev:null,
+  position:0, playerX:0, speed:0, lean:0, steerSm:0,
+  t:0, horizon:.42, shake:0, phase:0,
+  gateIdx:0, results:[], qa:null,
+  parts:[], off1:0, off2:0, cloud:0, hintT:0, runT:0, finishT:0, countT:0, countShown:-1
+};
+const keys={gas:false,brake:false,left:false,right:false};
+
+/* ========== audio ========== */
+let actx=null, muted=false;
+function ensureAudio(){
+  try{
+    if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(C)actx=new C();}
+    if(actx&&actx.state==='suspended')actx.resume();
+  }catch(e){}
+}
+function tone(f,d,type,vol,when){
+  if(muted||!actx)return;
+  try{
+    const t=actx.currentTime+(when||0), o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||.12,t+.015);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+    o.connect(g).connect(actx.destination);o.start(t);o.stop(t+d+.05);
+  }catch(e){}
+}
+const sfx={
+  ok(){tone(660,.14,'triangle',.16,0);tone(880,.14,'triangle',.14,.1);tone(1320,.28,'triangle',.14,.2)},
+  bad(){tone(240,.22,'sawtooth',.09,0);tone(170,.34,'sawtooth',.09,.18)},
+  tick(){tone(900,.07,'square',.05,0)},
+  beep(){tone(520,.16,'square',.07,0)},
+  go(){tone(880,.4,'square',.08,0)},
+  cone(){tone(140,.16,'square',.1,0)},
+  gate(){tone(500,.1,'sine',.1,0);tone(750,.14,'sine',.1,.08)},
+  fan(){[523,659,784,1046].forEach((f,i)=>tone(f,.28,'triangle',.14,i*.14))},
+  pop(){tone(1000+Math.random()*300,.09,'triangle',.1,0)}
+};
+
+/* ========== UI refs ========== */
+const ui={
+  hud:$('#hud'),pips:$('#pips'),progFill:$('#progFill'),spd:$('#spd'),hint:$('#hint'),touch:$('#touch'),
+  count:$('#count'),start:$('#start'),sheet:$('#qsheet'),pause:$('#pause'),harvest:$('#harvest'),review:$('#review'),
+  qtag:$('#qtag'),qnum:$('#qnum'),qclock:$('#qclock'),qbar:$('#qbar'),qtext:$('#qtext'),qopts:$('#qopts'),
+  qfeed:$('#qfeed'),qverdict:$('#qverdict'),qwhy:$('#qwhy'),qnext:$('#qnext')
+};
+function buildPips(){
+  ui.pips.innerHTML='';
+  for(let i=0;i<N;i++){const s=document.createElement('i');s.className='pip'+(i===0?' next':'');ui.pips.appendChild(s)}
+}
+function setPip(i,cls){ui.pips.children[i].className='pip '+cls}
+function markNext(){
+  for(let i=0;i<N;i++){const p=ui.pips.children[i];if(i===G.gateIdx&&!/got|miss/.test(p.className))p.className='pip next'}
+}
+function showCount(txt){
+  ui.count.innerHTML='';const s=document.createElement('span');s.textContent=txt;ui.count.appendChild(s);
+}
+let touchMode=false;
+function useTouch(){touchMode=true;ui.touch.hidden=false;ui.hint.hidden=true;$('#keysDesk').hidden=true;$('#keysTouch').hidden=false}
+if(window.matchMedia&&matchMedia('(pointer: coarse)').matches) useTouch();
+addEventListener('touchstart',useTouch,{passive:true,once:true});
+
+/* ========== run control ========== */
+let lastUsed=new Set(), playerName='';
+function newRun(){
+  ensureAudio();
+  ['start','pause','harvest','review'].forEach(k=>ui[k].hidden=true);
+  ui.sheet.hidden=true;
+  G.position=0;G.playerX=0;G.speed=0;G.lean=0;G.steerSm=0;G.gateIdx=0;G.results=[];G.qa=null;G.parts=[];
+  G.runT=0;G.finishT=0;G.shake=0;
+  const picked=[];
+  LESSONS.forEach(L=>{
+    const pool=shuffle(QUESTIONS.filter(q=>q.l===L.n)).sort((a,b)=>(lastUsed.has(a)?1:0)-(lastUsed.has(b)?1:0));
+    picked.push(...pool.slice(0,PER_LESSON));
+  });
+  lastUsed=new Set(picked);
+  const order=shuffle(picked);
+  gates.forEach((g,i)=>{
+    g.result=null;g.scr=null;
+    const q=order[i];
+    const opts=shuffle(q.o.map((t,k)=>({t,right:k===0})));
+    g.q=q;g.order=opts;
+  });
+  segments.forEach(s=>s.sprites.forEach(sp=>{if(sp.type==='cone')sp.hit=false}));
+  buildPips();
+  ui.progFill.style.width='0%';
+  ui.hud.hidden=false;ui.hint.classList.remove('off');G.hintT=0;
+  G.state='countdown';G.countT=0;G.countShown=-1;
+}
+function toAttract(){
+  G.state='attract';G.position=0;G.playerX=0;G.speed=0;
+  ui.hud.hidden=true;ui.count.innerHTML='';
+}
+
+/* ========== update ========== */
+function stepPhysics(dt){
+  const pz=G.position+PLAYER_Z;
+  const seg=segAt(pz);
+  const spct=G.speed/MAXV;
+
+  // target speed from input
+  let target=keys.brake?0:(keys.gas?MAXV:(touchMode?MAXV*0.8:CRUISE));
+  if(Math.abs(G.playerX)>1.08) target=Math.min(target,MAXV*0.22);
+  const rate=target>G.speed?ACCEL:(keys.brake?BRAKE:COAST);
+  G.speed+=clamp(target-G.speed,-rate*dt,rate*dt);
+
+  // steering with smoothing
+  const want=(keys.right?1:0)-(keys.left?1:0);
+  G.steerSm+=(want-G.steerSm)*Math.min(1,dt*9);
+  G.lean=G.steerSm;
+  G.playerX+=G.steerSm*dt*2.1*spct;
+  G.playerX-=dt*2*spct*spct*seg.curve*CENTRI*(1);
+  G.playerX=clamp(G.playerX,-1.8,1.8);
+
+  // approach next gate: brake smoothly and stop in front of it
+  const gate=gates[G.gateIdx];
+  let arrived=false;
+  if(gate&&gate.result===null){
+    const dist=gate.z-pz-STOP_GAP;
+    if(dist<APPROACH){
+      const cap=Math.sqrt(2*STOP_DECEL*Math.max(dist,0));
+      if(G.speed>cap)G.speed=cap;
+    }
+    if(dist<=25&&G.speed<260)arrived=true;
+  }
+  const old=G.position;
+  G.position+=G.speed*dt;
+
+  // cones
+  const a=Math.floor((old+PLAYER_Z)/SEG), b=Math.floor((G.position+PLAYER_Z)/SEG);
+  for(let n=a;n<=b;n++){
+    const s=segments[n];if(!s)continue;
+    for(const sp of s.sprites){
+      if(sp.type==='cone'&&!sp.hit&&Math.abs(G.playerX-sp.off)<0.2){
+        sp.hit=true;G.speed*=0.55;G.shake=0.35;sfx.cone();
+      }
+    }
+  }
+  G.phase+=G.speed*dt*0.0011;
+
+  if(arrived){G.speed=0;openQuestion(gate);return}
+  if(G.position+PLAYER_Z>=finishZ&&G.state==='race'){
+    G.state='finish';G.finishT=0;sfx.fan();spawnConfetti(W/2,H*.35,90);
+  }
+}
+function update(dt){
+  G.t+=dt;
+  G.horizon+=((G.state==='question'?.28:.42)-G.horizon)*Math.min(1,dt*4);
+  if(G.shake>0)G.shake=Math.max(0,G.shake-dt);
+  updateParts(dt);
+
+  if(G.state==='attract'){
+    G.speed=2600;G.position+=G.speed*dt;
+    G.playerX=Math.sin(G.t*.5)*.3;G.lean=Math.cos(G.t*.5)*.4;
+    G.phase+=G.speed*dt*0.0011;
+    if(G.position>gates[0].z-30000)G.position=0;
+    bgScroll(dt);return;
+  }
+  if(G.state==='countdown'){
+    G.countT+=dt;
+    const k=Math.floor(G.countT/0.9);
+    if(k!==G.countShown){
+      G.countShown=k;
+      if(k<3){showCount(AR(3-k));sfx.beep()}
+      else if(k===3){showCount('انطلق!');sfx.go();G.state='race';G.hintT=0}
+    }
+    return;
+  }
+  if(G.state==='race'){
+    G.runT+=dt;G.hintT+=dt;
+    if(G.hintT>7)ui.hint.classList.add('off');
+    if(G.hintT>0.9&&ui.count.firstChild)ui.count.innerHTML='';
+    stepPhysics(dt);
+    bgScroll(dt);
+  }else if(G.state==='question'){
+    G.playerX+=(0-G.playerX)*Math.min(1,dt*2.5);
+    G.steerSm*=0.85;G.lean=G.steerSm;
+    tickQuestion(dt);
+  }else if(G.state==='finish'){
+    G.finishT+=dt;
+    G.speed=Math.max(0,G.speed-MAXV*0.22*dt);
+    G.position+=G.speed*dt;G.phase+=G.speed*dt*0.0011;
+    G.steerSm*=0.9;G.lean=G.steerSm;
+    if(G.finishT>3.2&&G.state==='finish')showHarvest();
+  }
+  if(G.state!=='paused'){
+    const p=clamp((G.position+PLAYER_Z)/finishZ,0,1);
+    ui.progFill.style.width=(p*100).toFixed(1)+'%';
+    const k=String(Math.round(G.speed/MAXV*KMH));
+    if(ui.spd.dataset.v!==k){ui.spd.dataset.v=k;ui.spd.textContent=AR(k)}
+  }
+}
+function bgScroll(dt){
+  const seg=segAt(G.position+PLAYER_Z), sp=G.speed/MAXV;
+  G.off1+=seg.curve*sp*dt*W*0.012;
+  G.off2+=seg.curve*sp*dt*W*0.026;
+  G.cloud+=dt*6;
+}
+
+/* ========== questions ========== */
+let qIdx=0;
+function openQuestion(g){
+  G.state='question';
+  const q=g.q, gi=G.gateIdx;
+  G.qa={g,gi,t:QTIME,locked:false,lastTick:QTIME+1,auto:0};
+  sfx.gate();
+  ui.qtag.textContent='الدرس '+AR(q.l)+' · '+LESSONS[q.l-1].t;
+  ui.qnum.textContent='صندوق '+AR(gi+1)+' من '+AR(N);
+  ui.qtext.textContent=q.q;
+  ui.qopts.innerHTML='';
+  g.order.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='opt';b.dataset.i=i;
+    const n=document.createElement('span');n.className='n';n.textContent=AR(i+1);
+    const t=document.createElement('span');t.textContent=o.t;
+    b.append(n,t);
+    b.addEventListener('click',()=>answer(i));
+    ui.qopts.appendChild(b);
+  });
+  ui.qfeed.hidden=true;
+  ui.qclock.textContent=AR(QTIME);ui.qclock.classList.remove('low');
+  ui.qbar.style.transform='scaleX(1)';ui.qbar.classList.remove('low');
+  ui.sheet.style.animation='none';void ui.sheet.offsetWidth;ui.sheet.style.animation='';
+  ui.sheet.hidden=false;
+  ui.sheet.scrollTop=0;
+}
+function tickQuestion(dt){
+  const qa=G.qa;if(!qa)return;
+  if(!qa.locked){
+    qa.t=Math.max(0,qa.t-dt);
+    const sec=Math.ceil(qa.t);
+    ui.qclock.textContent=AR(sec);
+    ui.qbar.style.transform='scaleX('+(qa.t/QTIME).toFixed(4)+')';
+    if(qa.t<=5){ui.qclock.classList.add('low');ui.qbar.classList.add('low')}
+    if(sec<qa.lastTick){qa.lastTick=sec;if(sec<=5&&sec>0)sfx.tick()}
+    if(qa.t<=0)answer(-1);
+  }else if(!qa.canClose){
+    qa.lockT=Math.max(0,qa.lockT-dt);
+    const s2=Math.ceil(qa.lockT);
+    ui.qbar.style.transform='scaleX('+(qa.lockT/HINT_LOCK).toFixed(4)+')';
+    if(s2!==qa.lockShown){qa.lockShown=s2;ui.qnext.textContent='اقرأ الشرح… '+AR(s2)}
+    if(qa.lockT<=0){
+      qa.canClose=true;ui.qnext.disabled=false;ui.qnext.textContent='متابعة السباق';
+      ui.qclock.textContent='';ui.qnext.focus({preventScroll:true});
+    }
+  }
+}
+function answer(i){
+  const qa=G.qa;if(!qa||qa.locked||G.state!=='question')return;
+  qa.locked=true;
+  const g=qa.g, ok=i>=0&&g.order[i].right;
+  const rightIdx=g.order.findIndex(o=>o.right);
+  [...ui.qopts.children].forEach((b,k)=>{
+    b.disabled=true;
+    if(k===rightIdx)b.classList.add('right');
+    else if(k===i)b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  g.result=ok;
+  G.results.push({gi:qa.gi,q:g.q,chosen:i>=0?g.order[i].t:null,correct:g.order[rightIdx].t,ok,lesson:g.q.l});
+  setPip(qa.gi,ok?'got':'miss');
+  ui.qverdict.className=ok?'ok':'bad';
+  ui.qverdict.textContent=ok?'إجابة صحيحة! جمعت الصندوق.':(i<0?'انتهى الوقت. لم تُجمع هذا الصندوق.':'إجابة غير صحيحة. لم تُجمع هذا الصندوق.');
+  ui.qwhy.textContent=g.q.why+' (الكتاب، ص '+AR(g.q.p)+')';
+  ui.qfeed.hidden=false;
+  ui.qclock.classList.remove('low');
+  qa.lockT=HINT_LOCK;qa.canClose=false;qa.lockShown=-1;
+  ui.qnext.disabled=true;ui.qnext.textContent='اقرأ الشرح… '+AR(HINT_LOCK);
+  ui.qclock.textContent='';ui.qbar.classList.remove('low');ui.qbar.style.transform='scaleX(1)';
+  if(ok){sfx.ok();if(g.scr)spawnConfetti(g.scr.x,g.scr.y-g.scr.w*.3,70)}
+  else{sfx.bad();if(g.scr)spawnSmoke(g.scr.x,g.scr.y-g.scr.w*.2)}
+}
+function closeQuestion(){
+  if(G.state!=='question'||!G.qa||!G.qa.canClose)return;
+  ui.sheet.hidden=true;G.qa=null;
+  G.gateIdx++;markNext();
+  G.state='race';
+}
+ui.qnext.addEventListener('click',closeQuestion);
+
+/* ========== particles ========== */
+function spawnConfetti(x,y,n){
+  const cols=['#f7b733','#ffffff','#35c47c','#4aa9cf','#ee5a47'];
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, v=120+Math.random()*420;
+    G.parts.push({k:'c',x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-260,life:1.4+Math.random()*.6,max:2,s:5+Math.random()*7,c:cols[i%cols.length],r:Math.random()*6});
+  }
+}
+function spawnSmoke(x,y){
+  for(let i=0;i<22;i++)G.parts.push({k:'s',x:x+(Math.random()-.5)*160,y,vx:(Math.random()-.5)*80,vy:-40-Math.random()*90,life:.9+Math.random()*.5,max:1.4,s:18+Math.random()*26,c:'#9aa5a8',r:0});
+}
+function updateParts(dt){
+  for(let i=G.parts.length-1;i>=0;i--){
+    const p=G.parts[i];p.life-=dt;
+    if(p.life<=0){G.parts.splice(i,1);continue}
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    if(p.k==='c'){p.vy+=620*dt;p.r+=dt*8}else{p.s+=dt*30}
+  }
+}
+function drawParts(){
+  const sc=H/700;
+  for(const p of G.parts){
+    ctx.globalAlpha=clamp(p.life/(p.k==='c'?0.8:p.max),0,1)*(p.k==='s'?.5:1);
+    ctx.fillStyle=p.c;
+    if(p.k==='c'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillRect(-p.s*sc/2,-p.s*sc/4,p.s*sc,p.s*sc/2);ctx.restore()}
+    else{ctx.beginPath();ctx.arc(p.x,p.y,p.s*sc,0,7);ctx.fill()}
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ========== rendering ========== */
+function project(p,camX,camY,camZ,hor){
+  p.kx=-camX;p.ky=p.wy-camY;p.kz=p.wz-camZ;
+  p.sc=CAM_DEPTH/p.kz;
+  p.sx=Math.round(W/2+p.sc*p.kx*W/2);
+  p.sy=Math.round(hor-p.sc*p.ky*H/2);
+  p.sw=Math.round(p.sc*ROAD*W/2);
+}
+function poly(x1,y1,x2,y2,x3,y3,x4,y4,c){
+  ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.lineTo(x4,y4);ctx.closePath();ctx.fill();
+}
+const COL=[
+  {road:'#565c64',grass:'#e2c68c',rumble:'#f2efe4',lane:'#f6f2e6'},
+  {road:'#50565e',grass:'#d9ba7e',rumble:'#2a9d8f'}
+];
+function rr(x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function ridge(off,amp,freq,color,base){
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,base+2);
+  for(let x=0;x<=W;x+=10){
+    const xx=x+off;
+    const y=base-amp*(0.62+0.5*Math.sin(xx*freq)+0.28*Math.sin(xx*freq*2.3+1.7)+0.14*Math.sin(xx*freq*5.1+.4));
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(W,base+2);ctx.closePath();ctx.fill();
+}
+function drawBackground(hor){
+  const g=ctx.createLinearGradient(0,0,0,hor);
+  g.addColorStop(0,'#3e9fcb');g.addColorStop(.6,'#9ad2e0');g.addColorStop(1,'#f4e4bd');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,hor+2);
+  // sun
+  const sx=W*.8, sy=hor*.5, sr=Math.max(18,H*.05);
+  const rg=ctx.createRadialGradient(sx,sy,sr*.4,sx,sy,sr*4.2);
+  rg.addColorStop(0,'rgba(255,244,200,.95)');rg.addColorStop(.25,'rgba(255,236,170,.35)');rg.addColorStop(1,'rgba(255,236,170,0)');
+  ctx.fillStyle=rg;ctx.fillRect(sx-sr*4.5,sy-sr*4.5,sr*9,sr*9);
+  ctx.fillStyle='#fff6d6';ctx.beginPath();ctx.arc(sx,sy,sr,0,7);ctx.fill();
+  // clouds
+  ctx.fillStyle='rgba(255,255,255,.82)';
+  for(let i=0;i<5;i++){
+    const cx=((i*W*.31+G.cloud*(.6+i*.15)+G.off1*.2)%(W*1.4))-W*.2;
+    const cy=hor*(.16+((i*37)%5)*.1), s=H*.035*(1+(i%3)*.35);
+    ctx.beginPath();ctx.ellipse(cx,cy,s*2.4,s*.8,0,0,7);ctx.ellipse(cx+s*1.2,cy-s*.5,s*1.5,s*.9,0,0,7);ctx.ellipse(cx-s*1.3,cy-s*.2,s*1.3,s*.7,0,0,7);ctx.fill();
+  }
+  // sea strip + ridges
+  ctx.fillStyle='#6fb9cc';ctx.fillRect(0,hor-H*.012,W,H*.02);
+  ridge(G.off2*.5+300,H*.075,.0052,'#cdb48e',hor);
+  ridge(G.off1+900,H*.05,.0085,'#b99c72',hor+1);
+  // ground base
+  ctx.fillStyle='#e0c48a';ctx.fillRect(0,hor,W,H-hor);
+}
+function drawSegment(x1,y1,w1,x2,y2,w2,fog,col){
+  const r1=w1/6,r2=w2/6,l1=w1/32,l2=w2/32;
+  ctx.fillStyle=col.grass;ctx.fillRect(0,y2,W,y1-y2);
+  poly(x1-w1-r1,y1,x1-w1,y1,x2-w2,y2,x2-w2-r2,y2,col.rumble);
+  poly(x1+w1+r1,y1,x1+w1,y1,x2+w2,y2,x2+w2+r2,y2,col.rumble);
+  poly(x1-w1,y1,x1+w1,y1,x2+w2,y2,x2-w2,y2,col.road);
+  if(col.lane){
+    const lw1=w1*2/3,lw2=w2*2/3;let lx1=x1-w1+lw1,lx2=x2-w2+lw2;
+    for(let l=1;l<3;l++,lx1+=lw1,lx2+=lw2)poly(lx1-l1/2,y1,lx1+l1/2,y1,lx2+l2/2,y2,lx2-l2/2,y2,col.lane);
+  }
+  if(fog<1){ctx.fillStyle='rgba('+FOG[0]+','+FOG[1]+','+FOG[2]+','+(1-fog).toFixed(3)+')';ctx.fillRect(0,y2,W,y1-y2)}
+}
+
+/* --- sprites --- */
+function drawPalm(x,y,u,v){
+  const d=(v%2)?1:-1, h=3300*u;
+  ctx.strokeStyle='#7a5a3a';ctx.lineWidth=Math.max(1,190*u);ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+d*300*u,y-h*.55,x+d*130*u,y-h);ctx.stroke();
+  const tx=x+d*130*u, ty=y-h, L=1500*u;
+  for(let i=0;i<7;i++){
+    const a=Math.PI+(i/6)*Math.PI;
+    const ex=tx+Math.cos(a)*L, ey=ty+Math.sin(a)*L*.7+L*.28;
+    ctx.fillStyle=i%2?'#2f8f4e':'#3aa35c';
+    ctx.beginPath();ctx.moveTo(tx,ty);
+    ctx.quadraticCurveTo(tx+Math.cos(a)*L*.5,ty+Math.sin(a)*L*.5-L*.3,ex,ey);
+    ctx.quadraticCurveTo(tx+Math.cos(a)*L*.5,ty+Math.sin(a)*L*.5-L*.05,tx,ty);ctx.fill();
+  }
+}
+function drawOlive(x,y,u,v){
+  ctx.strokeStyle='#6b5238';ctx.lineWidth=Math.max(1,220*u);ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+((v%3)-1)*60*u,y-900*u);ctx.stroke();
+  const cols=['#7f9a57','#92ab69','#6f8b4c'];
+  for(let i=0;i<6;i++){
+    const ax=x+(((v+i*37)%9)-4)*115*u, ay=y-(1100+((v*i)%5)*170)*u;
+    ctx.fillStyle=cols[i%3];ctx.beginPath();ctx.arc(ax,ay,(430+((v+i*13)%4)*55)*u,0,7);ctx.fill();
+  }
+}
+const WALLS=['#efe2c6','#e6d3ad','#f3ead6','#ddc9a0','#e9d9c0'];
+function drawHouse(x,y,u,v){
+  const w=2500*u, h=(1700+(v%3)*450)*u, c=WALLS[v%WALLS.length];
+  ctx.fillStyle=c;ctx.fillRect(x-w/2,y-h,w,h);
+  ctx.fillStyle='rgba(60,40,10,.14)';ctx.fillRect(x+w*.34,y-h,w*.16,h);
+  ctx.fillStyle='#f8f2e2';ctx.fillRect(x-w/2-60*u,y-h-130*u,w+120*u,150*u);
+  if(v%2){ctx.fillStyle='#2c2f33';ctx.fillRect(x-w*.3,y-h-420*u,330*u,300*u);ctx.fillRect(x-w*.3-50*u,y-h-140*u,430*u,40*u)}
+  const rows=h>2100*u?2:1;
+  for(let r=0;r<rows;r++)for(let k=0;k<3;k++){
+    const wx=x-w*.36+k*w*.27, wy=y-h+ (260+r*650)*u, ww=330*u, wh=430*u;
+    ctx.fillStyle='#4e7684';ctx.fillRect(wx,wy+ww/2,ww,wh-ww/2);ctx.beginPath();ctx.arc(wx+ww/2,wy+ww/2,ww/2,Math.PI,0);ctx.fill();
+    ctx.strokeStyle='#fff7e6';ctx.lineWidth=Math.max(1,36*u);ctx.strokeRect(wx,wy+ww/2,ww,wh-ww/2);
+  }
+  ctx.fillStyle='#8a5a34';ctx.fillRect(x-170*u,y-640*u,340*u,640*u);
+}
+function drawMosque(x,y,u,v){
+  const w=2800*u, h=1500*u;
+  ctx.fillStyle='#f3ead3';ctx.fillRect(x-w/2,y-h,w,h);
+  ctx.fillStyle='rgba(60,40,10,.12)';ctx.fillRect(x+w*.36,y-h,w*.14,h);
+  ctx.fillStyle='#2a9d8f';ctx.beginPath();ctx.ellipse(x-w*.06,y-h,w*.26,h*.62,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#f7b733';ctx.fillRect(x-w*.06-18*u,y-h-h*.62-300*u,36*u,300*u);
+  ctx.fillStyle='#f3ead3';ctx.fillRect(x+w*.34,y-4300*u,380*u,4300*u);
+  ctx.fillStyle='#2a9d8f';ctx.beginPath();ctx.moveTo(x+w*.34-40*u,y-4300*u);ctx.lineTo(x+w*.34+190*u,y-5000*u);ctx.lineTo(x+w*.34+420*u,y-4300*u);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f7b733';ctx.beginPath();ctx.arc(x+w*.34+190*u,y-5100*u,70*u,0,7);ctx.fill();
+  for(let k=0;k<3;k++){
+    const ax=x-w*.34+k*w*.22;
+    ctx.fillStyle='#4e7684';ctx.fillRect(ax,y-820*u,260*u,500*u);ctx.beginPath();ctx.arc(ax+130*u,y-820*u,130*u,Math.PI,0);ctx.fill();
+  }
+}
+function drawBush(x,y,u,v){
+  ctx.fillStyle=['#6f8b4c','#5f7d45','#7f9a57'][v%3];
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(x+(i-1)*260*u,y-(220+(i%2)*120)*u,(300+((v+i)%3)*50)*u,0,7);ctx.fill()}
+}
+function drawRock(x,y,u,v){
+  ctx.fillStyle='#a58d6d';ctx.beginPath();ctx.ellipse(x,y-220*u,(520+(v%3)*120)*u,(300+(v%2)*80)*u,0,0,7);ctx.fill();
+  ctx.fillStyle='#b9a283';ctx.beginPath();ctx.ellipse(x-120*u,y-300*u,260*u,160*u,0,0,7);ctx.fill();
+}
+function drawCone(x,y,u,sp){
+  const w=340*u,h=520*u;
+  ctx.save();ctx.translate(x,y);
+  if(sp.hit){ctx.rotate(1.4);ctx.translate(0,-h*.12);ctx.globalAlpha*=.8}
+  ctx.fillStyle='#2b2f33';ctx.fillRect(-w*.62,-h*.1,w*1.24,h*.1);
+  ctx.fillStyle='#ff7a1f';ctx.beginPath();ctx.moveTo(-w*.45,-h*.1);ctx.lineTo(-w*.1,-h);ctx.lineTo(w*.1,-h);ctx.lineTo(w*.45,-h*.1);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(-w*.353,-h*.35);ctx.lineTo(-w*.255,-h*.6);ctx.lineTo(w*.255,-h*.6);ctx.lineTo(w*.353,-h*.35);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+function box(bx,y,s,bad,t){
+  const yy=y-s*.08-(bad?0:(Math.sin(G.t*3+t)*s*.035+s*.04));
+  if(!bad){ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(bx,y,s*.52,s*.1,0,0,7);ctx.fill()}
+  const body=bad?'#8b979b':'#f7b733', dark=bad?'#6f7b7f':'#d9930f', lid=bad?'#a0abaf':'#ffcb52', rib=bad?'#5b676b':'#b3361f';
+  ctx.save();
+  if(bad){ctx.translate(bx,yy);ctx.rotate(t%2?.12:-.1);ctx.translate(-bx,-yy);ctx.globalAlpha*=.85}
+  ctx.fillStyle=body;rr(bx-s/2,yy-s,s,s,s*.08);ctx.fill();
+  ctx.fillStyle=dark;ctx.fillRect(bx-s/2,yy-s*.2,s,s*.2);
+  ctx.fillStyle=lid;rr(bx-s*.55,yy-s*1.02,s*1.1,s*.24,s*.05);ctx.fill();
+  ctx.fillStyle=rib;ctx.fillRect(bx-s*.07,yy-s*1.02,s*.14,s*1.02);
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx,yy-s*.5,s*.24,0,7);ctx.fill();
+  ctx.fillStyle=rib;ctx.font='800 '+Math.max(6,s*.34)+'px Tajawal,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(bad?'×':'؟',bx,yy-s*.49);
+  ctx.restore();
+}
+function postsAndBanner(x,y,w,u,fill,label,lc,checker){
+  const postH=1450*u, postW=150*u;
+  ctx.fillStyle='#14505c';
+  ctx.fillRect(x-w*1.14-postW/2,y-postH,postW,postH);ctx.fillRect(x+w*1.14-postW/2,y-postH,postW,postH);
+  const bw=w*2.4, bh=520*u, bx=x-bw/2, by=y-postH-bh*.35;
+  ctx.fillStyle=fill;rr(bx,by,bw,bh,bh*.18);ctx.fill();
+  if(checker){
+    ctx.save();rr(bx,by,bw,bh,bh*.18);ctx.clip();
+    const cs=bh/4;
+    for(let r=0;r<4;r++)for(let c=0;c<Math.ceil(bw/cs);c++){ctx.fillStyle=(r+c)%2?'#fff':'#111';ctx.fillRect(bx+c*cs,by+r*cs,cs,cs)}
+    ctx.restore();
+    ctx.fillStyle='rgba(12,42,50,.82)';rr(x-w*.7,by+bh*.12,w*1.4,bh*.76,bh*.2);ctx.fill();
+  }
+  ctx.strokeStyle='#f7b733';ctx.lineWidth=Math.max(1,36*u);rr(bx,by,bw,bh,bh*.18);ctx.stroke();
+  ctx.fillStyle=lc;ctx.font=Math.max(7,430*u)+'px Lalezar,Tajawal,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,by+bh*.54);
+}
+function drawGate(sp,x,y,u){
+  const g=gates[sp.gi], w=ROAD*u;
+  g.scr={x,y,w};
+  let label='صندوق '+AR(sp.gi+1), lc='#f7b733';
+  if(g.result===true){label='جُمع ✓';lc='#7be0a6'}
+  else if(g.result===false){label='فات ×';lc='#ff9a8a'}
+  postsAndBanner(x,y,w,u,'#0f3b46',label,lc,false);
+  if(g.result!==true){
+    box(x,y,900*u,g.result===false,1);
+  }
+}
+function drawFinish(x,y,u){
+  const w=ROAD*u;
+  postsAndBanner(x,y,w,u,'#0f3b46','خط النهاية','#f7b733',true);
+}
+function drawSprite(sp,x,y,u){
+  switch(sp.type){
+    case 'palm':drawPalm(x,y,u,sp.v);break;
+    case 'olive':drawOlive(x,y,u,sp.v);break;
+    case 'house':drawHouse(x,y,u,sp.v);break;
+    case 'mosque':drawMosque(x,y,u,sp.v);break;
+    case 'bush':drawBush(x,y,u,sp.v);break;
+    case 'rock':drawRock(x,y,u,sp.v);break;
+    case 'cone':drawCone(x,y,u,sp);break;
+    case 'gate':drawGate(sp,x,y,u);break;
+    case 'finish':drawFinish(x,y,u);break;
+  }
+}
+
+/* --- the cyclist, seen from behind --- */
+function drawBike(){
+  const k=Math.min(H/640,W/560)*0.62;
+  const bx=W/2, by=H*.935;
+  const sp=G.speed/MAXV;
+  const bob=Math.sin(G.phase*2)*1.6*sp+ (G.state==='race'||G.state==='finish'?Math.sin(G.t*40)*.5*sp:0);
+  ctx.save();ctx.translate(bx,by);
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,3*k,64*k,12*k,0,0,7);ctx.fill();
+  ctx.rotate(G.lean*.13);ctx.translate(0,-bob*k);
+  // rear wheel
+  ctx.lineCap='round';
+  ctx.strokeStyle='#161b20';ctx.lineWidth=7*k;ctx.beginPath();ctx.ellipse(0,-78*k,10*k,78*k,0,0,7);ctx.stroke();
+  ctx.strokeStyle='#8e99a0';ctx.lineWidth=2*k;ctx.beginPath();ctx.ellipse(0,-78*k,6*k,70*k,0,0,7);ctx.stroke();
+  ctx.fillStyle='#e8553d';ctx.beginPath();ctx.arc(0,-150*k,4*k,0,7);ctx.fill();
+  // frame
+  ctx.strokeStyle='#1f9bb0';ctx.lineWidth=7*k;ctx.beginPath();ctx.moveTo(0,-78*k);ctx.lineTo(0,-168*k);ctx.stroke();
+  // legs
+  for(let s=-1;s<=1;s+=2){
+    const ph=G.phase+(s>0?Math.PI:0);
+    const hx=s*15*k, hy=-176*k, fx=s*26*k, fy=-42*k-Math.sin(ph)*32*k;
+    const kx=s*38*k, ky=(hy+fy)/2-Math.cos(ph)*8*k;
+    ctx.strokeStyle='#17324d';ctx.lineWidth=17*k;ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(kx,ky);ctx.stroke();
+    ctx.strokeStyle='#c78a5c';ctx.lineWidth=12*k;ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(fx,fy);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(fx,fy+5*k,13*k,6*k,0,0,7);ctx.fill();
+  }
+  // saddle
+  ctx.fillStyle='#22282d';rr(-21*k,-186*k,42*k,14*k,6*k);ctx.fill();
+  // torso (coral jersey)
+  ctx.fillStyle='#ee5f4d';ctx.beginPath();
+  ctx.moveTo(-27*k,-182*k);ctx.lineTo(27*k,-182*k);ctx.lineTo(38*k,-256*k);ctx.quadraticCurveTo(0,-272*k,-38*k,-256*k);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(-27*k,-203*k,54*k,6*k);
+  // school bag
+  ctx.fillStyle='#2a9d8f';rr(-23*k,-262*k,46*k,58*k,9*k);ctx.fill();
+  ctx.fillStyle='#f7b733';ctx.fillRect(-23*k,-236*k,46*k,7*k);
+  ctx.fillStyle='rgba(0,0,0,.16)';rr(-14*k,-224*k,28*k,16*k,4*k);ctx.fill();
+  // arms + handlebar
+  ctx.strokeStyle='#ee5f4d';ctx.lineWidth=13*k;
+  ctx.beginPath();ctx.moveTo(-36*k,-252*k);ctx.lineTo(-52*k,-214*k);ctx.moveTo(36*k,-252*k);ctx.lineTo(52*k,-214*k);ctx.stroke();
+  ctx.strokeStyle='#22282d';ctx.lineWidth=6*k;ctx.beginPath();ctx.moveTo(-62*k,-212*k);ctx.lineTo(62*k,-212*k);ctx.stroke();
+  ctx.fillStyle='#c78a5c';ctx.beginPath();ctx.arc(-53*k,-212*k,7*k,0,7);ctx.arc(53*k,-212*k,7*k,0,7);ctx.fill();
+  // head + helmet
+  ctx.fillStyle='#c78a5c';ctx.beginPath();ctx.arc(0,-282*k,19*k,0,7);ctx.fill();
+  ctx.fillStyle='#f4f7f5';ctx.beginPath();ctx.ellipse(0,-290*k,25*k,22*k,0,Math.PI,0);ctx.lineTo(24*k,-282*k);ctx.lineTo(-24*k,-282*k);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#2a9d8f';ctx.fillRect(-4*k,-312*k,8*k,28*k);
+  ctx.restore();
+}
+
+function render(){
+  const hor=H*G.horizon;
+  ctx.save();
+  if(G.shake>0&&!reduceMotion){const m=G.shake*H*.03;ctx.translate((Math.random()-.5)*m,(Math.random()-.5)*m)}
+  drawBackground(hor);
+
+  const pos=G.position, base=segAt(pos);
+  const bp=1-(pos%SEG)/SEG;           // percent remaining of base segment
+  const pseg=segAt(pos+PLAYER_Z);
+  const pp=1-((pos+PLAYER_Z)%SEG)/SEG;
+  const py=lerp(pseg.p1.wy,pseg.p2.wy,1-pp);
+  let maxy=H, x=0, dx=-(base.curve*bp);
+  for(let n=0;n<DRAW;n++){
+    const s=segments[(base.i+n)%segments.length];
+    s.fog=1/Math.pow(Math.E,(n/DRAW)*(n/DRAW)*4.5);
+    s.clip=maxy;
+    project(s.p1,G.playerX*ROAD-x,py+CAM_H,pos,hor);
+    project(s.p2,G.playerX*ROAD-x-dx,py+CAM_H,pos,hor);
+    x+=dx;dx+=s.curve;
+    if(s.p1.kz<=CAM_DEPTH||s.p2.sy>=s.p1.sy||s.p2.sy>=maxy)continue;
+    drawSegment(s.p1.sx,s.p1.sy,s.p1.sw,s.p2.sx,s.p2.sy,s.p2.sw,s.fog,COL[s.c]);
+    maxy=s.p1.sy;
+  }
+  for(let n=DRAW-1;n>0;n--){
+    const s=segments[(base.i+n)%segments.length];
+    if(!s.sprites.length||s.p1.kz<250)continue;
+    const sc=s.p1.sc,u=sc*W/2;
+    if(u*1000<2.5)continue;
+    for(const sp of s.sprites){
+      const sx=s.p1.sx+sc*sp.off*ROAD*W/2, sy=s.p1.sy;
+      const clip=sy>s.clip;
+      if(clip){ctx.save();ctx.beginPath();ctx.rect(0,0,W,s.clip);ctx.clip()}
+      ctx.globalAlpha=Math.min(1,s.fog*1.6);
+      drawSprite(sp,sx,sy,u);
+      ctx.globalAlpha=1;
+      if(clip)ctx.restore();
+    }
+  }
+  drawBike();
+  drawParts();
+  ctx.restore();
+}
+
+/* ========== loop ========== */
+let last=0, acc=0;
+const STEP=1/60;
+function frame(ts){
+  const dt=Math.min(.25,(ts-last)/1000||0);last=ts;
+  if(G.state!=='paused'){
+    acc+=dt;
+    while(acc>=STEP){update(STEP);acc-=STEP}
+  }
+  render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame)});
+
+/* ========== Firebase (Firestore REST) ========== */
+const QKEY='race_pending';
+function fbOn(){return !!(FIREBASE_CONFIG.apiKey&&FIREBASE_CONFIG.projectId)}
+function gradeOf(t){return t>=14?'ممتاز':t>=12?'جيد جداً':t>=9?'جيد':'تحتاج إلى مراجعة'}
+function buildRecord(total){
+  const lessons={};
+  LESSONS.forEach(L=>{const rs=G.results.filter(r=>r.lesson===L.n);lessons['lesson'+L.n]=rs.filter(r=>r.ok).length});
+  return {name:playerName||'بدون اسم',score:total,total:N,percent:Math.round(total/N*100),grade:gradeOf(total),
+    raceSeconds:Math.round(G.runT),lessons,device:touchMode?'mobile':'desktop',createdAt:new Date().toISOString()};
+}
+function fsVal(v){
+  if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};
+  if(typeof v==='boolean')return {booleanValue:v};
+  if(v&&typeof v==='object'){const f={};for(const k in v)f[k]=fsVal(v[k]);return {mapValue:{fields:f}}}
+  return {stringValue:String(v)};
+}
+async function fsSend(rec){
+  const f={};for(const k in rec)f[k]=k==='createdAt'?{timestampValue:rec[k]}:fsVal(rec[k]);
+  const url='https://firestore.googleapis.com/v1/projects/'+encodeURIComponent(FIREBASE_CONFIG.projectId)+
+    '/databases/(default)/documents/'+encodeURIComponent(FIREBASE_COLLECTION)+'?key='+encodeURIComponent(FIREBASE_CONFIG.apiKey);
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:f})});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+}
+function qLoad(){try{return JSON.parse(localStorage.getItem(QKEY)||'[]')}catch(e){return []}}
+function qSave(a){try{localStorage.setItem(QKEY,JSON.stringify(a.slice(-50)))}catch(e){}}
+let flushing=false;
+async function flushQueue(){
+  if(flushing||!fbOn())return 0;flushing=true;let sent=0;
+  try{
+    let a=qLoad();
+    while(a.length){await fsSend(a[0]);a.shift();qSave(a);sent++}
+  }catch(e){}finally{flushing=false}
+  return sent;
+}
+async function saveResult(rec,el){
+  if(!fbOn()){el.textContent='';return}
+  el.className='';el.textContent='جارٍ حفظ النتيجة…';
+  const a=qLoad();a.push(rec);qSave(a);
+  await flushQueue();
+  const left=qLoad().some(x=>x.createdAt===rec.createdAt&&x.name===rec.name);
+  if(left){el.className='bad';el.textContent='تعذّر حفظ النتيجة الآن، وستُحفظ تلقائياً عند الاتصال بالإنترنت.'}
+  else{el.className='ok';el.textContent='حُفظت النتيجة ✓'}
+}
+addEventListener('online',flushQueue);
+setTimeout(flushQueue,1500);
+
+/* ========== harvest & review ========== */
+function fmtTime(s){const m=Math.floor(s/60),r=Math.floor(s%60);return AR(m)+':'+AR(String(r).padStart(2,'0'))}
+function showHarvest(){
+  G.state='harvest';
+  ui.hud.hidden=true;ui.count.innerHTML='';ui.sheet.hidden=true;
+  ui.harvest.hidden=false;
+  const grid=$('#hgrid'), cnt=$('#hcount'), res=$('#hresult');
+  grid.innerHTML='';res.hidden=true;cnt.textContent='';
+  const total=G.results.filter(r=>r.ok).length;
+  $('#hname').textContent=playerName?('المتسابق: '+playerName):'';
+  const hs=$('#hsave');hs.className='';hs.textContent='';
+  saveResult(buildRecord(total),hs);
+  let got=0;
+  const cells=[];
+  for(let i=0;i<N;i++){const d=document.createElement('div');d.className='gbox';d.textContent='';grid.appendChild(d);cells.push(d)}
+  const rs=G.results.slice().sort((a,b)=>a.gi-b.gi);
+  rs.forEach((r,i)=>{
+    setTimeout(()=>{
+      if(ui.harvest.hidden)return;
+      const c=cells[i];
+      if(r.ok){c.classList.add('got');got++;sfx.pop()}else{c.classList.add('miss');c.textContent='×'}
+      cnt.textContent='جمعت '+AR(got)+' من '+AR(i+1)+' صندوقاً حتى الآن';
+    },350+i*170);
+  });
+  setTimeout(()=>{
+    if(ui.harvest.hidden)return;
+    cnt.textContent='';
+    $('#hscore').textContent=AR(total);
+    const grade=gradeOf(total);
+    $('#hgrade').textContent=grade;
+    const box=$('#hlessons');box.innerHTML='';
+    LESSONS.forEach(L=>{
+      const rs2=G.results.filter(r=>r.lesson===L.n), ok=rs2.filter(r=>r.ok).length;
+      const d=document.createElement('div');d.className='lchip';
+      d.innerHTML='الدرس '+AR(L.n)+': <b>'+AR(ok)+' من '+AR(rs2.length)+'</b>';
+      box.appendChild(d);
+    });
+    $('#hmeta').textContent='النسبة '+AR(Math.round(total/N*100))+'% · زمن السباق '+fmtTime(G.runT)+' (الزمن لا يدخل في العلامة)';
+    const missed=N-total;
+    $('#bReview').textContent=missed?'راجع الأسئلة التي أخطأت فيها':'راجع الأسئلة';
+    res.hidden=false;
+    total>=12?sfx.fan():sfx.ok();
+    $('#bAgain').focus({preventScroll:true});
+  },350+N*170+500);
+}
+function showReview(){
+  ui.harvest.hidden=true;ui.review.hidden=false;
+  const list=$('#revList');list.innerHTML='';
+  const miss=G.results.filter(r=>!r.ok).sort((a,b)=>a.gi-b.gi);
+  $('#revIntro').textContent=miss.length?('أخطأت في '+AR(miss.length)+(miss.length===1?' سؤال. هذه إجاباتها الصحيحة مع الشرح.':' أسئلة. هذه إجاباتها الصحيحة مع الشرح.')):'لم تخطئ في أي سؤال. أحسنت! هذه الأسئلة كاملة للمراجعة.';
+  const items=miss.length?miss:G.results.slice().sort((a,b)=>a.gi-b.gi);
+  items.forEach(r=>{
+    const d=document.createElement('div');d.className='ritem';
+    const h=document.createElement('h3');h.textContent=r.q.q;
+    const you=document.createElement('p');
+    if(!r.ok){you.className='you';you.textContent=r.chosen===null?'انتهى الوقت دون إجابة.':'إجابتك: '+r.chosen}
+    const right=document.createElement('p');right.className='right';right.textContent='الإجابة الصحيحة: '+r.correct;
+    const why=document.createElement('p');why.className='why';why.textContent=r.q.why;
+    const pg=document.createElement('p');pg.className='pg';pg.textContent='الدرس '+AR(r.q.l)+': '+LESSONS[r.q.l-1].t+' · الكتاب، ص '+AR(r.q.p);
+    d.append(h);if(!r.ok)d.append(you);d.append(right,why,pg);list.appendChild(d);
+  });
+  $('#bBack').focus({preventScroll:true});
+}
+
+/* ========== pause ========== */
+function pauseGame(){
+  if(G.state!=='race')return;
+  G.prev=G.state;G.state='paused';ui.pause.hidden=false;$('#bResume').focus({preventScroll:true});
+}
+function resumeGame(){
+  if(G.state!=='paused')return;
+  ui.pause.hidden=true;G.state=G.prev||'race';acc=0;
+}
+
+/* ========== input ========== */
+const KEYMAP={ArrowUp:'gas',KeyW:'gas',ArrowDown:'brake',KeyS:'brake',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
+  const k=KEYMAP[e.code];
+  if(k&&(G.state==='race'||G.state==='countdown'||G.state==='finish'||G.state==='attract')){keys[k]=true;e.preventDefault()}
+  if(e.code==='Escape'||e.code==='KeyP'){
+    if(G.state==='race')pauseGame();else if(G.state==='paused')resumeGame();
+    return;
+  }
+  if(G.state==='question'&&G.qa){
+    const m=/^(Digit|Numpad)([1-4])$/.exec(e.code);
+    if(m&&!G.qa.locked){answer(+m[2]-1);e.preventDefault();return}
+    if(G.qa.locked&&G.qa.canClose&&(e.code==='Enter'||e.code==='Space')){e.preventDefault();closeQuestion()}
+  }
+  if(G.state==='attract'&&e.code==='Enter'&&document.activeElement===document.body){tryStart()}
+});
+addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys[k]=false});
+let wakeLock=null;
+async function keepAwake(){try{if(navigator.wakeLock&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null})}}catch(e){}}
+['pointerdown','touchend','click'].forEach(ev=>addEventListener(ev,()=>{ensureAudio();if(G.state!=='attract')keepAwake()},{passive:true}));
+addEventListener('pagehide',()=>{for(const k in keys)keys[k]=false;if(G.state==='race')pauseGame()});
+addEventListener('orientationchange',()=>setTimeout(resize,300));
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;if(G.state==='race')pauseGame()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.state==='race')pauseGame()});
+
+function holdBtn(id,key){
+  const b=$(id);
+  const on=e=>{e.preventDefault();keys[key]=true;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};
+  const off=()=>{keys[key]=false;b.classList.remove('on')};
+  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);b.addEventListener('contextmenu',e=>e.preventDefault());
+}
+holdBtn('#tL','left');holdBtn('#tR','right');
+
+const nameIn=$('#pname'), ferr=$('#ferr');
+try{const sv=localStorage.getItem('race_name');if(sv)nameIn.value=sv}catch(e){}
+function cleanName(v){return String(v||'').replace(/\s+/g,' ').trim().slice(0,40)}
+function tryStart(){
+  const v=cleanName(nameIn.value);
+  if(v.length<2){ferr.textContent='اكتب اسمك قبل أن تبدأ السباق.';nameIn.classList.add('err');nameIn.focus();return}
+  ferr.textContent='';nameIn.classList.remove('err');playerName=v;
+  try{localStorage.setItem('race_name',v)}catch(e){}
+  nameIn.blur();newRun();
+}
+nameIn.addEventListener('input',()=>{if(cleanName(nameIn.value).length>=2){ferr.textContent='';nameIn.classList.remove('err')}});
+$('#bStart').addEventListener('click',e=>{e.preventDefault();tryStart()});
+nameIn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.keyCode===13){e.preventDefault();tryStart()}});
+$('#bPause').addEventListener('click',()=>{G.state==='paused'?resumeGame():pauseGame()});
+$('#bResume').addEventListener('click',resumeGame);
+$('#bRestartP').addEventListener('click',newRun);
+$('#bAgain').addEventListener('click',newRun);
+$('#bAgain2').addEventListener('click',newRun);
+$('#bReview').addEventListener('click',showReview);
+$('#bBack').addEventListener('click',()=>{ui.review.hidden=true;ui.harvest.hidden=false});
+$('#bMute').addEventListener('click',()=>{
+  muted=!muted;$('#icSound').hidden=muted;$('#icMute').hidden=!muted;
+  $('#bMute').setAttribute('aria-label',muted?'تشغيل الصوت':'كتم الصوت');
+});
+
+})();
+</script>
+
+</body></html>
