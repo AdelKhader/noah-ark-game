@@ -1407,15 +1407,12 @@ function holdBtn(id,key){
   b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);b.addEventListener('contextmenu',e=>e.preventDefault());
 }
 holdBtn('#tL','left');holdBtn('#tR','right');
-
 const nameIn=$('#pname'), ferr=$('#ferr');
-try{const sv=localStorage.getItem('race_name');if(sv)nameIn.value=sv}catch(e){}
 function cleanName(v){return String(v||'').replace(/\s+/g,' ').trim().slice(0,40)}
 function tryStart(){
   const v=cleanName(nameIn.value);
   if(v.length<2){ferr.textContent='اكتب اسمك قبل أن تبدأ السباق.';nameIn.classList.add('err');nameIn.focus();return}
   ferr.textContent='';nameIn.classList.remove('err');playerName=v;
-  try{localStorage.setItem('race_name',v)}catch(e){}
   nameIn.blur();newRun();
 }
 nameIn.addEventListener('input',()=>{if(cleanName(nameIn.value).length>=2){ferr.textContent='';nameIn.classList.remove('err')}});
