@@ -319,8 +319,8 @@ kbd{display:inline-block;min-width:1.9em;text-align:center;padding:2px 8px;borde
    انسخ القيمتين من: Firebase Console ← Project settings ← Your apps ← SDK setup and configuration
    تُحفظ النتائج في Cloud Firestore داخل المجموعة FIREBASE_COLLECTION. */
 const FIREBASE_CONFIG = {
-  apiKey:    "",   // مثال: "AIzaSy..."
-  projectId: ""    // مثال: "islamic-race"
+  apiKey:    "AIzaSyBJvnXeD_ksqWYSCI1pK7R-Lin2urrMDjA",
+  projectId: "examschool110670"
 };
 const FIREBASE_COLLECTION = "race_results";
 /* ==================================================== */
@@ -1286,7 +1286,7 @@ async function flushQueue(){
   return sent;
 }
 async function saveResult(rec,el){
-  if(!fbOn()){el.textContent='';return}
+  if(!fbOn()){el.className='bad';el.textContent='لم تُحفظ النتيجة: إعدادات Firebase غير مكتملة في الملف.';return}
   el.className='';el.textContent='جارٍ حفظ النتيجة…';
   const a=qLoad();a.push(rec);qSave(a);
   await flushQueue();
