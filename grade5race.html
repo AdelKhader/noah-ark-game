@@ -111,7 +111,7 @@ details li small{display:block;color:#00843d;font-weight:800}
   <div class="card">
     <div class="namebox">
       <label for="nameInput">اسم الطالب</label>
-      <input id="nameInput" type="text" maxlength="20" placeholder="اكتب اسمك هنا" autocomplete="off">
+      <input id="nameInput" name="student_name_field" type="text" maxlength="20" placeholder="اكتب اسمك هنا" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
       <div id="nameErr">اكتب اسمك أولًا</div>
     </div>
     <h1>سباق الصف الخامس</h1>
@@ -163,6 +163,7 @@ details li small{display:block;color:#00843d;font-weight:800}
       <div class="chip">🪙 العملات المجموعة: <span id="endCoins">0</span></div>
     </div>
     <div class="sub" id="endMsg"></div>
+    <div class="sub" id="saveStatus" style="font-size:clamp(13px,2.2vw,16px)"></div>
     <details id="review" style="display:none"><summary>📝 راجع الأسئلة التي أخطأت فيها</summary><ol id="reviewList"></ol></details>
     <button class="btn" id="againBtn">سباق جديد 🔄</button>
   </div>
@@ -372,12 +373,13 @@ function updHud(){
 
 function startGame(){
   const nm=$("nameInput").value.trim();
-  if(!nm){
+  if(nm.length<3){
+    $("nameErr").textContent=nm?"اكتب اسمك كاملًا (ثلاثة أحرف على الأقل)":"اكتب اسمك أولًا";
     $("nameErr").style.display="block";
     const inp=$("nameInput");inp.classList.remove("err");void inp.offsetWidth;inp.classList.add("err");inp.focus();
     return;
   }
-  pname=nm;try{localStorage.setItem("pname5",nm)}catch(e){}
+  pname=nm;
   round=pickRound();idx=0;score=0;coins=0;correct=0;streak=0;wrong=[];progress=[];
   $("hName").textContent=pname;
   ctx=gctx;cloudTop=15;
@@ -738,12 +740,57 @@ function next(){
   $("hud").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
-/* ============ حفظ النتيجة ============
-   نقطة ربط جاهزة للمرحلة القادمة (GitHub / Firebase).
-   تُستدعى مرة واحدة عند ظهور النتيجة النهائية بكائن فيه: الاسم، العلامة، العملات، النسبة، التاريخ. */
-function saveResult(result){
-  // لاحقًا: إرسال result إلى Firebase أو GitHub هنا
+/* ============ حفظ النتيجة على Firebase (Firestore REST) ============
+   تُحفظ في مجموعة مستقلة اسمها grade5_results (منفصلة عن results و race_results).
+   يلزم وجود كتلة لها في قواعد Firestore، وتشترط: الاسم 3 أحرف فأكثر، والعلامة رقم صحيح بين 0 والمجموع. */
+const FIREBASE_CONFIG={apiKey:"AIzaSyBJvnXeD_ksqWYSCI1pK7R-Lin2urrMDjA",projectId:"examschool110670"};
+const FIREBASE_COLLECTION="grade5_results", GAME_ID="race-grade5", QKEY="g5_pending";
+function fbOn(){return !!(FIREBASE_CONFIG.apiKey&&FIREBASE_CONFIG.projectId)}
+function fsVal(v){
+  if(typeof v==="number")return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};
+  if(typeof v==="boolean")return {booleanValue:v};
+  return {stringValue:String(v)};
 }
+async function fsSend(rec){
+  const f={};for(const k in rec)f[k]=k==="createdAt"?{timestampValue:rec[k]}:fsVal(rec[k]);
+  const url="https://firestore.googleapis.com/v1/projects/"+encodeURIComponent(FIREBASE_CONFIG.projectId)+
+    "/databases/(default)/documents/"+encodeURIComponent(FIREBASE_COLLECTION)+"?key="+encodeURIComponent(FIREBASE_CONFIG.apiKey);
+  const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:f})});
+  if(!res.ok){let m="";try{m=((await res.json()).error||{}).status||""}catch(e){}const er=new Error("HTTP "+res.status+(m?" "+m:""));er.status=res.status;throw er}
+}
+function qLoad(){try{return JSON.parse(localStorage.getItem(QKEY)||"[]")}catch(e){return []}}
+function qSave(a){try{localStorage.setItem(QKEY,JSON.stringify(a.slice(-50)))}catch(e){}}
+let flushing=false,lastErr="";const dropped=new Set();
+/* خطأ دائم (مثل رفض القواعد 4xx) يُسقِط السجل من الطابور حتى لا يوقف نتائج الطلاب اللاحقين؛ أما انقطاع الإنترنت فيُعاد لاحقًا */
+async function flushQueue(){
+  if(flushing||!fbOn())return;flushing=true;
+  try{
+    let a=qLoad();
+    while(a.length){
+      try{await fsSend(a[0]);a.shift();qSave(a);lastErr=""}
+      catch(e){
+        lastErr=String(e&&e.message||e);
+        if(e&&e.status>=400&&e.status<500&&e.status!==429){dropped.add(a[0].createdAt+"|"+a[0].name);a.shift();qSave(a)}
+        else break;
+      }
+    }
+  }finally{flushing=false}
+}
+async function saveResult(result){
+  const el=$("saveStatus");
+  if(!fbOn()){el.style.color="#e53935";el.textContent="لم تُحفظ النتيجة: إعدادات Firebase غير مكتملة.";return}
+  const rec={name:result.name,score:result.mark,total:result.total,percent:result.percent,coins:result.coins,
+    game:GAME_ID,device:matchMedia("(pointer: coarse)").matches?"mobile":"desktop",createdAt:result.date};
+  el.style.color="";el.textContent="جارٍ حفظ النتيجة…";
+  const a=qLoad();a.push(rec);qSave(a);
+  await flushQueue();
+  const pending=qLoad().some(x=>x.createdAt===rec.createdAt&&x.name===rec.name);
+  if(dropped.has(rec.createdAt+"|"+rec.name)){el.style.color="#e53935";el.textContent="لم تُحفظ النتيجة ("+lastErr+"). أخبر المعلم."}
+  else if(pending){el.style.color="#e53935";el.textContent="تعذّر حفظ النتيجة الآن"+(lastErr?" ("+lastErr+")":"")+"، وستُحفظ تلقائيًا عند توفر الاتصال."}
+  else{el.style.color="#2e7d32";el.textContent="حُفظت النتيجة ✓"}
+}
+window.addEventListener("online",flushQueue);
+setTimeout(flushQueue,1500);
 
 /* ============ النهاية ============ */
 function endGame(){
@@ -784,7 +831,10 @@ function confetti(){
 /* ============ الأحداث ============ */
 cvs=$("cv");gctx=ctx=cvs.getContext("2d");
 bcv=$("bgcv");bctx=bcv.getContext("2d");
-try{const sv=localStorage.getItem("pname5");if(sv)$("nameInput").value=sv}catch(e){}
+/* الاسم لا يُحفظ في المتصفح: يُفرَّغ الحقل عند كل فتح أو تحديث للصفحة */
+function clearName(){const i=$("nameInput");i.value="";$("nameErr").style.display="none";i.classList.remove("err")}
+clearName();
+window.addEventListener("pageshow",clearName);
 $("startBtn").onclick=startGame;
 $("againBtn").onclick=()=>{show("start");startDemo()};
 $("nextBtn").onclick=next;
